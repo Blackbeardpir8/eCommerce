@@ -43,6 +43,7 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = ['name', 'price', 'description', 'category', 'subcategory', 'stock']
 
+
 ProductImageFormSet = modelformset_factory(
     ProductImage,
     fields=('image',),
