@@ -1,6 +1,6 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from store.models import Product
-from store.forms import RegisterForm , LoginForm, ProductForm
+from store.models import Product,ProductImage
+from store.forms import RegisterForm , LoginForm, ProductForm,ProductImageFormSet
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.core.paginator import Paginator
@@ -44,15 +44,27 @@ def logout_view(request):
 def add_product(request):
     if request.method == 'POST':
         form = ProductForm(request.POST)
-        if form.is_valid():
+        formset = ProductImageFormSet(request.POST, request.FILES, queryset=ProductImage.objects.none())
+        if form.is_valid() and formset.is_valid():
             product = form.save(commit=False)
             product.created_by = request.user
             product.save()
-            messages.success(request, "Product added successfully.")
+
+            for image_form in formset.cleaned_data:
+                if image_form and image_form.get('image'):
+                    ProductImage.objects.create(product=product, image=image_form['image'])
+
+            messages.success(request, "Product and images added successfully.")
             return redirect('product_list')
     else:
         form = ProductForm()
-    return render(request, 'store/product_form.html', {'form': form, 'title': 'Add Product'})
+        formset = ProductImageFormSet(queryset=ProductImage.objects.none())
+    
+    return render(request, 'store/product_form.html', {
+        'form': form,
+        'formset': formset,
+        'title': 'Add Product',
+    })
 
 
 # All products list
@@ -66,17 +78,33 @@ def product_list(request):
 
 
 #update product
+
+
+
+
 def edit_product(request, pk):
     product = get_object_or_404(Product, pk=pk)
     if request.method == 'POST':
         form = ProductForm(request.POST, instance=product)
-        if form.is_valid():
+        formset = ProductImageFormSet(request.POST, request.FILES, queryset=ProductImage.objects.filter(product=product))
+        if form.is_valid() and formset.is_valid():
             form.save()
-            messages.success(request, "Product updated.")
+
+            for image_form in formset:
+                if image_form.cleaned_data and image_form.cleaned_data.get('image'):
+                    ProductImage.objects.create(product=product, image=image_form.cleaned_data['image'])
+
+            messages.success(request, "Product and images updated.")
             return redirect('product_list')
     else:
         form = ProductForm(instance=product)
-    return render(request, 'store/product_form.html', {'form': form, 'title': 'Edit Product'})
+        formset = ProductImageFormSet(queryset=ProductImage.objects.filter(product=product))
+
+    return render(request, 'store/product_form.html', {
+        'form': form,
+        'formset': formset,
+        'title': 'Edit Product',
+    })
 
 
 # Delete product

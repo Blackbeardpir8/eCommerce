@@ -2,7 +2,8 @@ from django import forms
 from store.models import *
 from django.contrib.auth.models import User
 from django.contrib.auth.forms import AuthenticationForm
-from django import forms
+from django import forms 
+from django.forms import modelformset_factory
 from store.models import Product
 
 # Register user form
@@ -42,3 +43,9 @@ class ProductForm(forms.ModelForm):
         model = Product
         fields = ['name', 'price', 'description', 'category', 'subcategory', 'stock']
 
+ProductImageFormSet = modelformset_factory(
+    ProductImage,
+    fields=('image',),
+    extra=1,  # number of image fields shown
+    max_num=1,
+)
