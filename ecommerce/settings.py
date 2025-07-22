@@ -80,6 +80,7 @@ WSGI_APPLICATION = 'ecommerce.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+"""
 # Inbuilt SQLite
 DATABASES = {
     'default': {
@@ -87,7 +88,7 @@ DATABASES = {
         'NAME': BASE_DIR / 'db.sqlite3',
     }
 }
-
+"""
 # Potgres Database (Not used in this project)
 DATABASES = {
     'default': {
