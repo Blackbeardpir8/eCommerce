@@ -1,29 +1,45 @@
-
+{% extends 'base.html' %}
+{% block title %}Product List{% endblock %}
+{% block content %}
 <h2>Product List</h2>
-<a href="{% url 'add_product' %}">+ Add Product</a>
-<ul>
-  {% for product in products %}
-    <li>
-      <strong>{{ product.name }}</strong> - ₹{{ product.price }}
-      [<a href="{% url 'edit_product' product.pk %}">Edit</a>]
-      [<a href="{% url 'delete_product' product.pk %}">Delete</a>]
-    </li>
-  {% empty %}
-    <li>No products found.</li>
-  {% endfor %}
-</ul>
 
-<div class="pagination">
+<div style="text-align: right; margin-bottom: 20px;">
+  <a href="{% url 'add_product' %}" style="text-decoration: none; background: #007bff; color: white; padding: 8px 15px; border-radius: 5px;">+ Add Product</a>
+</div>
+
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Price</th>
+    <th>Actions</th>
+  </tr>
+  {% for product in products %}
+  <tr>
+    <td><strong>{{ product.name }}</strong></td>
+    <td>₹{{ product.price }}</td>
+    <td>
+      <a href="{% url 'edit_product' product.pk %}">Edit</a> |
+      <a href="{% url 'delete_product' product.pk %}">Delete</a>
+    </td>
+  </tr>
+  {% empty %}
+  <tr>
+    <td colspan="3">No products found.</td>
+  </tr>
+  {% endfor %}
+</table>
+
+<div class="pagination" style="margin-top: 20px; text-align: center;">
   {% if products.has_previous %}
     <a href="?page=1">First</a>
     <a href="?page={{ products.previous_page_number }}">Previous</a>
   {% endif %}
 
-  <span>Page {{ products.number }} of {{ products.paginator.num_pages }}</span>
+  <span style="margin: 0 10px;">Page {{ products.number }} of {{ products.paginator.num_pages }}</span>
 
   {% if products.has_next %}
     <a href="?page={{ products.next_page_number }}">Next</a>
     <a href="?page={{ products.paginator.num_pages }}">Last</a>
   {% endif %}
 </div>
-
+{% endblock %}

@@ -4,11 +4,32 @@ from store.forms import RegisterForm , LoginForm, ProductForm,ProductImageFormSe
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.core.paginator import Paginator
+from django.db.models import Q
 
 # Create your views here.
 
 def home(request):
-    return render(request, 'store/home.html')
+    query = request.GET.get('q')
+    min_price = request.GET.get('min_price')
+    max_price = request.GET.get('max_price')
+
+    products = Product.objects.all()
+
+    if query:
+        products = products.filter(name__icontains=query)
+
+    if min_price:
+        products = products.filter(price__gte=min_price)
+    if max_price:
+        products = products.filter(price__lte=max_price)
+
+    return render(request, 'store/home.html', {
+        'products': products,
+        'query': query or '',
+        'min_price': min_price or '',
+        'max_price': max_price or '',
+    })
+
 
 def register_view(request):
     if request.method == 'POST':

@@ -1,1 +1,42 @@
-<h1>Welcome to the eCommerce store</h1>
+{% extends 'base.html' %}
+{% block title %}Home{% endblock %}
+{% block content %}
+<h2>Search & Filter Products</h2>
+
+<!-- Search & Price Filter Form -->
+<form method="get" style="margin-bottom: 30px;">
+  <input type="text" name="q" placeholder="Search product name" value="{{ query }}" style="padding: 8px; width: 300px;">
+
+  <label style="margin-left: 20px;">Min ₹:
+    <input type="number" name="min_price" value="{{ min_price }}" style="width: 80px;">
+  </label>
+
+  <label style="margin-left: 20px;">Max ₹:
+    <input type="number" name="max_price" value="{{ max_price }}" style="width: 80px;">
+  </label>
+
+  <button type="submit" style="margin-left: 15px; padding: 8px 15px;">Search</button>
+</form>
+
+<!-- Product Listing -->
+<table>
+  <tr>
+    <th>Name</th>
+    <th>Price</th>
+    <th>Actions</th>
+  </tr>
+  {% for product in products %}
+  <tr>
+    <td>{{ product.name }}</td>
+    <td>₹{{ product.price }}</td>
+    <td>
+      <a href="{% url 'add_to_cart' product.id %}">Add to Cart</a>
+    </td>
+  </tr>
+  {% empty %}
+  <tr>
+    <td colspan="3">No matching products found.</td>
+  </tr>
+  {% endfor %}
+</table>
+{% endblock %}
