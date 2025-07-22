@@ -1,5 +1,5 @@
 from django.shortcuts import render,redirect,get_object_or_404
-from store.models import Product,ProductImage
+from store.models import Product,ProductImage, Cart, CartItem
 from store.forms import RegisterForm , LoginForm, ProductForm,ProductImageFormSet
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
@@ -117,3 +117,45 @@ def delete_product(request, pk):
     return render(request, 'store/product_confirm_delete.html', {'product': product})
 
 
+# Cart
+def add_to_cart(request, product_id):
+    product = get_object_or_404(Product, id=product_id)
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+
+    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+    if not created:
+        cart_item.quantity += 1
+        cart_item.save()
+
+    messages.success(request, f"{product.name} added to cart.")
+    return redirect('cart_view')
+
+# view
+def cart_view(request):
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+    items = cart.items.select_related('product')
+    total = cart.total()
+
+    return render(request, 'store/cart.html', {
+        'items': items,
+        'total': total,
+    })
+
+#remove cart 
+def remove_from_cart(request, item_id):
+    item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+    item.delete()
+    return redirect('cart_view')
+
+
+#update cart
+def update_cart_item(request, item_id):
+    item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+    if request.method == 'POST':
+        quantity = int(request.POST.get('quantity', 1))
+        if quantity > 0:
+            item.quantity = quantity
+            item.save()
+        else:
+            item.delete()
+    return redirect('cart_view')

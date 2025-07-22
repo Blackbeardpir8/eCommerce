@@ -1,0 +1,27 @@
+
+<h2>Your Cart</h2>
+<table>
+  <tr>
+    <th>Product</th>
+    <th>Price</th>
+    <th>Qty</th>
+    <th>Subtotal</th>
+    <th>Action</th>
+  </tr>
+  {% for item in items %}
+  <tr>
+    <td>{{ item.product.name }}</td>
+    <td>₹{{ item.product.price }}</td>
+    <td>
+      <form action="{% url 'update_cart_item' item.id %}" method="post">
+        {% csrf_token %}
+        <input type="number" name="quantity" value="{{ item.quantity }}" min="1">
+        <button type="submit">Update</button>
+      </form>
+    </td>
+    <td>₹{{ item.subtotal }}</td>
+    <td><a href="{% url 'remove_from_cart' item.id %}">Remove</a></td>
+  </tr>
+  {% endfor %}
+</table>
+<p><strong>Total:</strong> ₹{{ total }}</p>
