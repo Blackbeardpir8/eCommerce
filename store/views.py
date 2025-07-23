@@ -1,13 +1,12 @@
-from django.shortcuts import render,redirect,get_object_or_404
-from store.models import Product,ProductImage, Cart, CartItem
-from store.forms import RegisterForm , LoginForm, ProductForm,ProductImageFormSet
+from django.shortcuts import render, redirect, get_object_or_404
+from store.models import Product, ProductImage, Cart, CartItem, Category, SubCategory
+from store.forms import RegisterForm, LoginForm, ProductForm, ProductImageFormSet
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
 
-# Create your views here.
-
+# Existing views (home, register, login, logout remain the same)
 def home(request):
     query = request.GET.get('q')
     min_price = request.GET.get('min_price')
@@ -18,24 +17,10 @@ def home(request):
     if query:
         products = products.filter(name__icontains=query)
 
-    try:
-        min_price_val = float(min_price) if min_price else None
-    except ValueError:
-        min_price_val = None
-
-    try:
-        max_price_val = float(max_price) if max_price else None
-    except ValueError:
-        max_price_val = None
-
-    if min_price_val is not None and max_price_val is not None:
-        products = products.filter(price__gte=min_price_val, price__lte=max_price_val)
-
-    elif min_price_val is not None:
-        products = products.filter(price__lt=min_price_val)
-
-    elif max_price_val is not None:
-        products = products.filter(price__lte=max_price_val).order_by('-price')
+    if min_price:
+        products = products.filter(price__gte=min_price)
+    if max_price:
+        products = products.filter(price__lte=max_price)
 
     return render(request, 'store/home.html', {
         'products': products,
@@ -44,13 +29,12 @@ def home(request):
         'max_price': max_price or '',
     })
 
-
 def register_view(request):
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password']) 
+            user.set_password(form.cleaned_data['password'])
             user.save()
             messages.success(request, 'Account created! Please login.')
             return redirect('login')
@@ -73,9 +57,7 @@ def logout_view(request):
     logout(request)
     return redirect('login')
 
-
-
-#products add
+# Product views with slug support
 def add_product(request):
     if request.method == 'POST':
         form = ProductForm(request.POST)
@@ -101,21 +83,21 @@ def add_product(request):
         'title': 'Add Product',
     })
 
-
-# All products list
 def product_list(request):
     products = Product.objects.all().order_by('-id')
-    paginator = Paginator(products, 5)  # Show 5 per page
+    paginator = Paginator(products, 5)
     page = request.GET.get('page')
     products = paginator.get_page(page)
     return render(request, 'store/product_list.html', {'products': products})
 
+# New view for product detail using slug
+def product_detail(request, slug):
+    product = get_object_or_404(Product, slug=slug)
+    return render(request, 'store/product_detail.html', {'product': product})
 
-
-#update product
-
-def edit_product(request, pk):
-    product = get_object_or_404(Product, pk=pk)
+# Updated edit view using slug
+def edit_product_by_slug(request, slug):
+    product = get_object_or_404(Product, slug=slug)
     if request.method == 'POST':
         form = ProductForm(request.POST, instance=product)
         formset = ProductImageFormSet(request.POST, request.FILES, queryset=ProductImage.objects.filter(product=product))
@@ -136,20 +118,40 @@ def edit_product(request, pk):
         'form': form,
         'formset': formset,
         'title': 'Edit Product',
+        'product': product
     })
 
-
-# Delete product
-def delete_product(request, pk):
-    product = get_object_or_404(Product, pk=pk)
+# Updated delete view using slug
+def delete_product_by_slug(request, slug):
+    product = get_object_or_404(Product, slug=slug)
     if request.method == 'POST':
         product.delete()
         messages.success(request, "Product deleted.")
         return redirect('product_list')
     return render(request, 'store/product_confirm_delete.html', {'product': product})
 
+# New views for category-based product listing
+def category_products(request, category_slug):
+    category = get_object_or_404(Category, slug=category_slug)
+    products = Product.objects.filter(category=category)
+    
+    return render(request, 'store/category_products.html', {
+        'category': category,
+        'products': products,
+    })
 
-# Cart
+def subcategory_products(request, category_slug, subcategory_slug):
+    category = get_object_or_404(Category, slug=category_slug)
+    subcategory = get_object_or_404(SubCategory, slug=subcategory_slug, category=category)
+    products = Product.objects.filter(subcategory=subcategory)
+    
+    return render(request, 'store/subcategory_products.html', {
+        'category': category,
+        'subcategory': subcategory,
+        'products': products,
+    })
+
+# Cart views (remain the same)
 def add_to_cart(request, product_id):
     product = get_object_or_404(Product, id=product_id)
     cart, _ = Cart.objects.get_or_create(user=request.user)
@@ -162,7 +164,6 @@ def add_to_cart(request, product_id):
     messages.success(request, f"{product.name} added to cart.")
     return redirect('cart_view')
 
-# view
 def cart_view(request):
     cart, _ = Cart.objects.get_or_create(user=request.user)
     items = cart.items.select_related('product')
@@ -173,14 +174,11 @@ def cart_view(request):
         'total': total,
     })
 
-#remove cart 
 def remove_from_cart(request, item_id):
     item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
     item.delete()
     return redirect('cart_view')
 
-
-#update cart
 def update_cart_item(request, item_id):
     item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
     if request.method == 'POST':

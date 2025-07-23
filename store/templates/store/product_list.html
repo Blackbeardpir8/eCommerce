@@ -9,25 +9,23 @@
 
 <table>
   <tr>
-    <th>Image</th>
     <th>Name</th>
     <th>Price</th>
+    <th>Slug</th>
     <th>Actions</th>
   </tr>
   {% for product in products %}
   <tr>
     <td>
-      {% if product.images.first %}
-        <img src="{{ product.images.first.image.url }}" width="80" height="80" alt="{{ product.name }}">
-      {% else %}
-        <span>No image</span>
-      {% endif %}
+      <strong>
+        <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
+      </strong>
     </td>
-    <td><strong>{{ product.name }}</strong></td>
     <td>₹{{ product.price }}</td>
+    <td><code>{{ product.slug }}</code></td>
     <td>
-      <a href="{% url 'edit_product' product.pk %}">Edit</a> |
-      <a href="{% url 'delete_product' product.pk %}">Delete</a>
+      <a href="{% url 'edit_product' product.slug %}">Edit</a> |
+      <a href="{% url 'delete_product' product.slug %}">Delete</a>
     </td>
   </tr>
   {% empty %}
