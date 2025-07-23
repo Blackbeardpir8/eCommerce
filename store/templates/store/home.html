@@ -36,7 +36,9 @@
         <span>No image</span>
       {% endif %}
     </td>
-    <td>{{ product.name }}</td>
+    <td>
+  <a href="{% url 'product_detail' product.slug %}">{{ product.name }}</a>
+</td>
     <td>₹{{ product.price }}</td>
     <td>
       <a href="{% url 'add_to_cart' product.id %}">Add to Cart</a>

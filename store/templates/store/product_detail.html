@@ -1,0 +1,19 @@
+{% extends 'base.html' %}
+
+{% block title %}{{ product.name }}{% endblock %}
+
+{% block content %}
+  <h2>{{ product.name }}</h2>
+
+  {% if product.images.first %}
+        <img src="{{ product.images.first.image.url }}" width="100" height="100" alt="{{ product.name }}">
+      {% else %}
+        <span>No image</span>
+      {% endif %}
+
+  <p><strong>Price:</strong> ₹{{ product.price }}</p>
+  <p><strong>Description:</strong> {{ product.description }}</p>
+  <p><strong>Stock:</strong> {{ product.stock }}</p>
+  <p><strong>Category:</strong> {{ product.category.name }}</p>
+  <p><strong>Subcategory:</strong> {{ product.subcategory.name }}</p>
+{% endblock %}
