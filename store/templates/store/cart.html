@@ -12,7 +12,14 @@
   </tr>
   {% for item in items %}
   <tr>
-    <td>{{ item.product.name }}</td>
+    <td>
+      {% if item.product.images.first %}
+        <img src="{{ item.product.images.first.image.url }}" width="80" height="80" alt="{{ item.product.name }}"><br>
+      {% else %}
+        <span>No image</span><br>
+      {% endif %}
+      {{ item.product.name }}
+    </td>
     <td>₹{{ item.product.price }}</td>
     <td>
       <form method="post" action="{% url 'update_cart_item' item.id %}">

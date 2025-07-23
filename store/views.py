@@ -18,10 +18,24 @@ def home(request):
     if query:
         products = products.filter(name__icontains=query)
 
-    if min_price:
-        products = products.filter(price__gte=min_price)
-    if max_price:
-        products = products.filter(price__lte=max_price)
+    try:
+        min_price_val = float(min_price) if min_price else None
+    except ValueError:
+        min_price_val = None
+
+    try:
+        max_price_val = float(max_price) if max_price else None
+    except ValueError:
+        max_price_val = None
+
+    if min_price_val is not None and max_price_val is not None:
+        products = products.filter(price__gte=min_price_val, price__lte=max_price_val)
+
+    elif min_price_val is not None:
+        products = products.filter(price__lt=min_price_val)
+
+    elif max_price_val is not None:
+        products = products.filter(price__lte=max_price_val).order_by('-price')
 
     return render(request, 'store/home.html', {
         'products': products,
@@ -36,7 +50,7 @@ def register_view(request):
         form = RegisterForm(request.POST)
         if form.is_valid():
             user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])  # hash password
+            user.set_password(form.cleaned_data['password']) 
             user.save()
             messages.success(request, 'Account created! Please login.')
             return redirect('login')
@@ -99,9 +113,6 @@ def product_list(request):
 
 
 #update product
-
-
-
 
 def edit_product(request, pk):
     product = get_object_or_404(Product, pk=pk)

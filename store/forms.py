@@ -33,20 +33,30 @@ class LoginForm(AuthenticationForm):
         fields = ['username', 'password']
 
 
-
-
-
 #Product Form
 
 class ProductForm(forms.ModelForm):
     class Meta:
         model = Product
-        fields = ['name', 'price', 'description', 'category', 'subcategory', 'stock']
+        fields = ['name', 'price', 'description', 'category', 'subcategory', 'stock','slug']
 
 
 ProductImageFormSet = modelformset_factory(
     ProductImage,
     fields=('image',),
-    extra=1,  # number of image fields shown
+    extra=1,  
     max_num=1,
 )
+
+# Category Form
+class CategoryForm(forms.ModelForm):
+    class Meta:
+        model = Category
+        fields = ['name', 'image','slug']
+
+
+# SubCategory Form
+class SubCategoryForm(forms.ModelForm):
+    class Meta:
+        model = SubCategory
+        fields = ['name', 'category','slug']

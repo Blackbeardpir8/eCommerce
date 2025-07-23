@@ -1,39 +1,40 @@
 from django.contrib import admin
 from store.models import *
-
-# Register your models here.
+from store.forms import CategoryForm, SubCategoryForm, ProductForm
 
 # Inline for Product Images
 class ProductImageInline(admin.TabularInline):
     model = ProductImage
-    extra = 1  # Show one empty image field by default
+    extra = 1
 
-# Admin for Product
+# Product Admin
 class ProductAdmin(admin.ModelAdmin):
+    form = ProductForm
     inlines = [ProductImageInline]
     list_display = ('name', 'price', 'category', 'subcategory', 'stock', 'created_by')
-    prepopulated_fields = {'slug': ('name',)}  # Auto-fill slug
+    prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name', 'description')
     list_filter = ('category', 'subcategory')
-    readonly_fields = ('slug',)
+    #readonly_fields = ('slug',)
 
-# Admin for Category
+# Category Admin
 class CategoryAdmin(admin.ModelAdmin):
+    form = CategoryForm
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name',)
-    readonly_fields = ('slug',)
+    #readonly_fields = ('slug',)
 
-# Admin for SubCategory
+# SubCategory Admin
 class SubCategoryAdmin(admin.ModelAdmin):
+    form = SubCategoryForm
     prepopulated_fields = {'slug': ('name',)}
     list_display = ('name', 'category')
     search_fields = ('name',)
     list_filter = ('category',)
-    readonly_fields = ('slug',)
+    #readonly_fields = ('slug',)
 
-# Register models 
+# Register models
 admin.site.register(Category, CategoryAdmin)
 admin.site.register(SubCategory, SubCategoryAdmin)
 admin.site.register(Product, ProductAdmin)
-admin.site.register(ProductImage)  
-
+admin.site.register(ProductImage)
