@@ -1,220 +1,244 @@
-{% extends 'base.html' %}
-
-{% block title %}Home - eCommerce Store{% endblock %}
-
+{% extends 'base.html' %} {% block title %}Home - eCommerce Store{% endblock %}
 {% block content %}
 <div class="card">
-    <div class="card-header">
-        <h2>🔍 Search & Filter Products</h2>
-    </div>
-    <div class="card-body">
-        <form method="get" class="d-flex" style="gap: 1rem; flex-wrap: wrap; align-items: end;">
-            <div class="form-group" style="flex: 2; min-width: 250px; margin-bottom: 0;">
-                <label for="search">Search Products</label>
-                <input type="text" 
-                       id="search" 
-                       name="q" 
-                       class="form-control" 
-                       placeholder="Search by product name..." 
-                       value="{{ query }}">
-            </div>
-            
-            <div class="form-group" style="flex: 1; min-width: 120px; margin-bottom: 0;">
-                <label for="min_price">Min Price (₹)</label>
-                <input type="number" 
-                       id="min_price" 
-                       name="min_price" 
-                       class="form-control" 
-                       placeholder="0" 
-                       value="{{ min_price }}"
-                       min="0"
-                       step="0.01">
-            </div>
-            
-            <div class="form-group" style="flex: 1; min-width: 120px; margin-bottom: 0;">
-                <label for="max_price">Max Price (₹)</label>
-                <input type="number" 
-                       id="max_price" 
-                       name="max_price" 
-                       class="form-control" 
-                       placeholder="∞" 
-                       value="{{ max_price }}"
-                       min="0"
-                       step="0.01">
-            </div>
-            
-            <div class="form-group" style="margin-bottom: 0;">
-                <button type="submit" class="btn btn-primary">
-                    Search
-                </button>
-                <a href="{% url 'home' %}" class="btn btn-secondary">
-                    Reset
-                </a>
-            </div>
-        </form>
-    </div>
+  <div class="card-header">
+    <h2>🔍 Search & Filter Products</h2>
+  </div>
+  <div class="card-body">
+    <form
+      method="get"
+      class="d-flex"
+      style="gap: 1rem; flex-wrap: wrap; align-items: end"
+    >
+      <div
+        class="form-group"
+        style="flex: 2; min-width: 250px; margin-bottom: 0"
+      >
+        <label for="search">Search Products</label>
+        <input
+          type="text"
+          id="search"
+          name="q"
+          class="form-control"
+          placeholder="Search by product name..."
+          value="{{ query }}"
+        />
+      </div>
+
+      <div
+        class="form-group"
+        style="flex: 1; min-width: 120px; margin-bottom: 0"
+      >
+        <label for="min_price">Min Price (₹)</label>
+        <input
+          type="number"
+          id="min_price"
+          name="min_price"
+          class="form-control"
+          placeholder="0"
+          value="{{ min_price }}"
+          min="0"
+          step="0.01"
+        />
+      </div>
+
+      <div
+        class="form-group"
+        style="flex: 1; min-width: 120px; margin-bottom: 0"
+      >
+        <label for="max_price">Max Price (₹)</label>
+        <input
+          type="number"
+          id="max_price"
+          name="max_price"
+          class="form-control"
+          placeholder="∞"
+          value="{{ max_price }}"
+          min="0"
+          step="0.01"
+        />
+      </div>
+
+      <div class="form-group" style="margin-bottom: 0">
+        <button type="submit" class="btn btn-primary">Search</button>
+        <a href="{% url 'home' %}" class="btn btn-secondary"> Reset </a>
+      </div>
+    </form>
+  </div>
 </div>
 
 <!-- Results Summary -->
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h3>
-        {% if query or min_price or max_price %}
-            Search Results
-            {% if query %}for "{{ query }}"{% endif %}
-        {% else %}
-            Latest Products
-        {% endif %}
-    </h3>
-    <div class="text-muted">
-        {{ products|length }} product{{ products|length|pluralize }} found
-    </div>
+  <h3>
+    {% if query or min_price or max_price %} Search Results {% if query %}for
+    "{{ query }}"{% endif %} {% else %} Latest Products {% endif %}
+  </h3>
+  <div class="text-muted">
+    {{ products|length }} product{{ products|length|pluralize }} found
+  </div>
 </div>
 
 <!-- Products Grid -->
 {% if products %}
-    <div class="product-grid">
-        {% for product in products %}
-            <div class="product-card">
-                <div style="position: relative;">
-                    {% if product.images.first %}
-                        <img src="{{ product.images.first.image.url }}" 
-                             alt="{{ product.name }}" 
-                             class="product-image">
-                    {% else %}
-                        <div class="product-image" style="background: linear-gradient(45deg, #f0f0f0, #e0e0e0); display: flex; align-items: center; justify-content: center; color: #666;">
-                            📷 No Image
-                        </div>
-                    {% endif %}
-                    
-                    {% if product.is_out_of_stock %}
-                        <div style="position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.8rem;">
-                            Out of Stock
-                        </div>
-                    {% endif %}
-                </div>
-                
-                <div class="product-info">
-                    <h4 class="product-title">
-                        <a href="{% url 'product_detail' product.slug %}" style="color: inherit; text-decoration: none;">
-                            {{ product.name }}
-                        </a>
-                    </h4>
-                    
-                    <div class="product-price">₹{{ product.price }}</div>
-                    
-                    <div style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
-                        <div><strong>Category:</strong> {{ product.category.name }}</div>
-                        <div><strong>Subcategory:</strong> {{ product.subcategory.name }}</div>
-                        <div><strong>Stock:</strong> {{ product.stock }} available</div>
-                    </div>
-                    
-                    <div style="margin-bottom: 1rem; font-size: 0.9rem; color: #666;">
-                        {{ product.description|truncatewords:15 }}
-                    </div>
-                    
-                    <div class="d-flex" style="gap: 0.5rem; flex-wrap: wrap;">
-                        {% if user.is_authenticated %}
-                            {% if user.profile.user_type == 'customer' %}
-                                {% if not product.is_out_of_stock %}
-                                    <a href="{% url 'add_to_cart' product.id %}" class="btn btn-success">
-                                        Add to Cart
-                                    </a>
-                                    <a href="{% url 'add_to_wishlist' product.id %}" class="btn btn-secondary">
-                                        Wishlist
-                                    </a>
-                                {% else %}
-                                    <button class="btn btn-secondary" disabled>
-                                        Out of Stock
-                                    </button>
-                                {% endif %}
-                            {% endif %}
-                        {% else %}
-                            <a href="{% url 'login' %}" class="btn btn-primary">
-                                Login to Buy
-                            </a>
-                        {% endif %}
-                        
-                        <a href="{% url 'product_detail' product.slug %}" class="btn btn-secondary">
-                            View Details
-                        </a>
-                    </div>
-                </div>
-            </div>
-        {% endfor %}
+<div class="product-grid">
+  {% for product in products %}
+  <div class="product-card">
+    <div style="position: relative">
+      {% if product.images.first %}
+      <img
+        src="{{ product.images.first.image.url }}"
+        alt="{{ product.name }}"
+        class="product-image"
+      />
+      {% else %}
+      <div
+        class="product-image"
+        style="
+          background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #666;
+        "
+      >
+        📷 No Image
+      </div>
+      {% endif %} {% if product.is_out_of_stock %}
+      <div
+        style="
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: #dc3545;
+          color: white;
+          padding: 0.25rem 0.5rem;
+          border-radius: 3px;
+          font-size: 0.8rem;
+        "
+      >
+        Out of Stock
+      </div>
+      {% endif %}
     </div>
+
+    <div class="product-info">
+      <h4 class="product-title">
+        <a
+          href="{% url 'product_detail' product.slug %}"
+          style="color: inherit; text-decoration: none"
+        >
+          {{ product.name }}
+        </a>
+      </h4>
+
+      <div class="product-price">₹{{ product.price }}</div>
+
+      <div style="font-size: 0.9rem; color: #666; margin-bottom: 1rem">
+        <div><strong>Category:</strong> {{ product.category.name }}</div>
+        <div><strong>Subcategory:</strong> {{ product.subcategory.name }}</div>
+        <div><strong>Stock:</strong> {{ product.stock }} available</div>
+      </div>
+
+      <div style="margin-bottom: 1rem; font-size: 0.9rem; color: #666">
+        {{ product.description|truncatewords:15 }}
+      </div>
+
+      <div class="d-flex" style="gap: 0.5rem; flex-wrap: wrap">
+        {% if user.is_authenticated %} {% if user.profile.user_type ==
+        'customer' %} {% if not product.is_out_of_stock %}
+        <a href="{% url 'add_to_cart' product.id %}" class="btn btn-success">
+          Add to Cart
+        </a>
+        <a
+          href="{% url 'add_to_wishlist' product.id %}"
+          class="btn btn-secondary"
+        >
+          Wishlist
+        </a>
+        {% else %}
+        <button class="btn btn-secondary" disabled>Out of Stock</button>
+        {% endif %} {% endif %} 
+        <a href="{% url 'login' %}" class="btn btn-primary"> Login to Buy </a>
+        
+
+        <a
+          href="{% url 'product_detail' product.slug %}"
+          class="btn btn-secondary"
+        >
+          View Details
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
 {% else %}
-    <div class="card">
-        <div class="card-body text-center">
-            <div style="font-size: 4rem; margin-bottom: 1rem;">🔍</div>
-            <h4>No Products Found</h4>
-            <p class="text-muted">
-                {% if query or min_price or max_price %}
-                    Try adjusting your search criteria or <a href="{% url 'home' %}">browse all products</a>.
-                {% else %}
-                    No products are available at the moment. Check back later!
-                {% endif %}
-            </p>
-            {% if query or min_price or max_price %}
-                <a href="{% url 'home' %}" class="btn btn-primary">
-                    View All Products
-                </a>
-            {% endif %}
-        </div>
-    </div>
+<div class="card">
+  <div class="card-body text-center">
+    <div style="font-size: 4rem; margin-bottom: 1rem">🔍</div>
+    <h4>No Products Found</h4>
+    <p class="text-muted">
+      {% if query or min_price or max_price %} Try adjusting your search
+      criteria or <a href="{% url 'home' %}">browse all products</a>. {% else %}
+      No products are available at the moment. Check back later! {% endif %}
+    </p>
+    {% if query or min_price or max_price %}
+    <a href="{% url 'home' %}" class="btn btn-primary"> View All Products </a>
+    {% endif %}
+  </div>
+</div>
 {% endif %}
 
 <!-- Quick Actions for Authenticated Users -->
 {% if user.is_authenticated %}
-    <div class="card mt-3">
-        <div class="card-header">
-            <h4>Quick Actions</h4>
-        </div>
-        <div class="card-body">
-            <div class="d-flex" style="gap: 1rem; flex-wrap: wrap;">
-                {% if user.profile.user_type == 'supplier' %}
-                    <a href="{% url 'add_product' %}" class="btn btn-success">
-                        Add New Product
-                    </a>
-                    <a href="{% url 'supplier_products' %}" class="btn btn-primary">
-                        Manage My Products
-                    </a>
-                    <a href="{% url 'supplier_dashboard' %}" class="btn btn-secondary">
-                        Dashboard
-                    </a>
-                {% else %}
-                    <a href="{% url 'cart_view' %}" class="btn btn-success">
-                        View Cart
-                    </a>
-                    <a href="{% url 'wishlist_view' %}" class="btn btn-primary">
-                        My Wishlist
-                    </a>
-                    <a href="{% url 'product_list' %}" class="btn btn-secondary">
-                        All Products
-                    </a>
-                {% endif %}
-            </div>
-        </div>
+<div class="card mt-3">
+  <div class="card-header">
+    <h4>Quick Actions</h4>
+  </div>
+  <div class="card-body">
+    <div class="d-flex" style="gap: 1rem; flex-wrap: wrap">
+      {% if user.profile.user_type == 'supplier' %}
+      <a href="{% url 'add_product' %}" class="btn btn-success">
+        Add New Product
+      </a>
+      <a href="{% url 'supplier_products' %}" class="btn btn-primary">
+        Manage My Products
+      </a>
+      <a href="{% url 'supplier_dashboard' %}" class="btn btn-secondary">
+        Dashboard
+      </a>
+      {% else %}
+      <a href="{% url 'cart_view' %}" class="btn btn-success"> View Cart </a>
+      <a href="{% url 'wishlist_view' %}" class="btn btn-primary">
+        My Wishlist
+      </a>
+      <a href="{% url 'product_list' %}" class="btn btn-secondary">
+        All Products
+      </a>
+      {% endif %}
     </div>
+  </div>
+</div>
 {% endif %}
 
 <style>
-    .product-card:hover {
-        transform: translateY(-5px);
-        box-shadow: 0 5px 25px rgba(0,0,0,0.15);
+  .product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .product-title a:hover {
+    color: #007bff !important;
+  }
+
+  @media (max-width: 768px) {
+    .d-flex form {
+      flex-direction: column;
     }
 
-    .product-title a:hover {
-        color: #007bff !important;
+    .form-group {
+      margin-bottom: 1rem !important;
     }
-
-    @media (max-width: 768px) {
-        .d-flex form {
-            flex-direction: column;
-        }
-        
-        .form-group {
-            margin-bottom: 1rem !important;
-        }
-    }
+  }
 </style>
 {% endblock %}
