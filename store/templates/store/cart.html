@@ -1,37 +1,241 @@
 {% extends 'base.html' %}
-{% block title %}Cart{% endblock %}
+
+{% block title %}Shopping Cart - eCommerce Store{% endblock %}
+
 {% block content %}
-<h2>Your Shopping Cart</h2>
-<table>
-  <tr>
-    <th>Product</th>
-    <th>Price</th>
-    <th>Qty</th>
-    <th>Subtotal</th>
-    <th>Action</th>
-  </tr>
-  {% for item in items %}
-  <tr>
-    <td>
-      {% if item.product.images.first %}
-        <img src="{{ item.product.images.first.image.url }}" width="80" height="80" alt="{{ item.product.name }}"><br>
-      {% else %}
-        <span>No image</span><br>
-      {% endif %}
-      {{ item.product.name }}
-    </td>
-    <td>₹{{ item.product.price }}</td>
-    <td>
-      <form method="post" action="{% url 'update_cart_item' item.id %}">
-        {% csrf_token %}
-        <input type="number" name="quantity" value="{{ item.quantity }}" min="1">
-        <button type="submit">Update</button>
-      </form>
-    </td>
-    <td>₹{{ item.subtotal }}</td>
-    <td><a href="{% url 'remove_from_cart' item.id %}">Remove</a></td>
-  </tr>
-  {% endfor %}
-</table>
-<p><strong>Total:</strong> ₹{{ total }}</p>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>🛒 Your Shopping Cart</h2>
+    <a href="{% url 'home' %}" class="btn btn-secondary">
+        ← Continue Shopping
+    </a>
+</div>
+
+{% if items %}
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <!-- Cart Items -->
+        <div class="card">
+            <div class="card-header">
+                <h4>Cart Items ({{ items|length }})</h4>
+            </div>
+            <div class="card-body" style="padding: 0;">
+                {% for item in items %}
+                    <div class="cart-item" style="display: flex; align-items: center; padding: 1.5rem; border-bottom: 1px solid #dee2e6; {% if forloop.last %}border-bottom: none;{% endif %}">
+                        <!-- Product Image -->
+                        <div style="flex-shrink: 0; margin-right: 1.5rem;">
+                            {% if item.product.images.first %}
+                                <img src="{{ item.product.images.first.image.url }}" 
+                                     alt="{{ item.product.name }}" 
+                                     style="width: 100px; height: 100px; object-fit: cover; border-radius: 8px;">
+                            {% else %}
+                                <div style="width: 100px; height: 100px; background: linear-gradient(45deg, #f0f0f0, #e0e0e0); display: flex; align-items: center; justify-content: center; color: #666; border-radius: 8px; font-size: 0.8rem;">
+                                    No Image
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Product Info -->
+                        <div style="flex: 1;">
+                            <h5 style="margin-bottom: 0.5rem;">
+                                <a href="{% url 'product_detail' item.product.slug %}" style="color: #333; text-decoration: none;">
+                                    {{ item.product.name }}
+                                </a>
+                            </h5>
+                            
+                            <div style="font-size: 0.9rem; color: #666; margin-bottom: 0.5rem;">
+                                Category: {{ item.product.category.name }} > {{ item.product.subcategory.name }}
+                            </div>
+                            
+                            <div style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
+                                Seller: {{ item.product.created_by.first_name|default:item.product.created_by.username }}
+                            </div>
+                            
+                            <!-- Stock Warning -->
+                            {% if item.quantity > item.product.stock %}
+                                <div style="background: #fff3cd; color: #856404; padding: 0.5rem; border-radius: 4px; font-size: 0.9rem; margin-bottom: 1rem;">
+                                    ⚠️ Only {{ item.product.stock }} items available
+                                </div>
+                            {% endif %}
+                            
+                            <!-- Quantity and Price -->
+                            <div style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
+                                <!-- Quantity Update Form -->
+                                <form method="post" action="{% url 'update_cart_item' item.id %}" style="display: flex; align-items: center; gap: 0.5rem;">
+                                    {% csrf_token %}
+                                    <label style="font-size: 0.9rem; font-weight: 600;">Qty:</label>
+                                    <input type="number" 
+                                           name="quantity" 
+                                           value="{{ item.quantity }}" 
+                                           min="1" 
+                                           max="{{ item.product.stock }}"
+                                           style="width: 70px; padding: 0.25rem; border: 1px solid #ced4da; border-radius: 4px; text-align: center;">
+                                    <button type="submit" class="btn btn-sm btn-primary">
+                                        Update
+                                    </button>
+                                </form>
+                                
+                                <!-- Price Info -->
+                                <div style="font-size: 1rem;">
+                                    <span style="color: #666;">₹{{ item.product.price }} each</span>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Subtotal and Remove -->
+                        <div style="text-align: right; margin-left: 1rem;">
+                            <div style="font-size: 1.4rem; font-weight: bold; color: #007bff; margin-bottom: 1rem;">
+                                ₹{{ item.subtotal }}
+                            </div>
+                            
+                            <a href="{% url 'remove_from_cart' item.id %}" 
+                               class="btn btn-danger btn-sm"
+                               onclick="return confirm('Remove {{ item.product.name }} from cart?')">
+                                🗑️ Remove
+                            </a>
+                        </div>
+                    </div>
+                {% endfor %}
+            </div>
+        </div>
+
+        <!-- Order Summary -->
+        <div class="card" style="height: fit-content; position: sticky; top: 2rem;">
+            <div class="card-header">
+                <h4>💰 Order Summary</h4>
+            </div>
+            <div class="card-body">
+                <div style="margin-bottom: 1.5rem;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem;">
+                        <span>Subtotal ({{ items|length }} item{{ items|length|pluralize }}):</span>
+                        <span>₹{{ total }}</span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #666;">
+                        <span>Shipping:</span>
+                        <span>FREE</span>
+                    </div>
+                    
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 0.5rem; color: #666;">
+                        <span>Tax:</span>
+                        <span>Calculated at checkout</span>
+                    </div>
+                    
+                    <hr>
+                    
+                    <div style="display: flex; justify-content: space-between; font-size: 1.2rem; font-weight: bold;">
+                        <span>Total:</span>
+                        <span style="color: #007bff;">₹{{ total }}</span>
+                    </div>
+                </div>
+                
+                <!-- Checkout Button -->
+                <button class="btn btn-success" style="width: 100%; padding: 1rem; font-size: 1.1rem; font-weight: 600;">
+                    🚀 Proceed to Checkout
+                </button>
+                
+                <div class="text-center mt-3">
+                    <small class="text-muted">
+                        Secure checkout with SSL encryption
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Recommended Products -->
+    <div class="card mt-4">
+        <div class="card-header">
+            <h4>🌟 You might also like</h4>
+        </div>
+        <div class="card-body">
+            <div class="product-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+                <!-- This would be populated with recommended products -->
+                <div class="text-center text-muted" style="grid-column: 1 / -1; padding: 2rem;">
+                    Recommended products will appear here
+                </div>
+            </div>
+        </div>
+    </div>
+
+{% else %}
+    <!-- Empty Cart -->
+    <div class="card">
+        <div class="card-body text-center" style="padding: 4rem 2rem;">
+            <div style="font-size: 6rem; margin-bottom: 2rem; opacity: 0.5;">🛒</div>
+            <h3 style="margin-bottom: 1rem;">Your cart is empty</h3>
+            <p class="text-muted" style="margin-bottom: 2rem;">
+                Looks like you haven't added any items to your cart yet.<br>
+                Start shopping to fill it up!
+            </p>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="{% url 'home' %}" class="btn btn-primary btn-lg">
+                    🏠 Go to Home
+                </a>
+                <a href="{% url 'product_list' %}" class="btn btn-secondary btn-lg">
+                    📦 Browse Products
+                </a>
+                {% if user.is_authenticated %}
+                    <a href="{% url 'wishlist_view' %}" class="btn btn-secondary btn-lg">
+                        ❤️ View Wishlist
+                    </a>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+{% endif %}
+
+<!-- Quick Actions -->
+<div class="card mt-3">
+    <div class="card-body">
+        <div class="d-flex justify-content-center" style="gap: 1rem; flex-wrap: wrap;">
+            <a href="{% url 'home' %}" class="btn btn-secondary">
+                🏠 Home
+            </a>
+            <a href="{% url 'product_list' %}" class="btn btn-secondary">
+                📦 All Products
+            </a>
+            {% if user.is_authenticated %}
+                <a href="{% url 'wishlist_view' %}" class="btn btn-secondary">
+                    ❤️ Wishlist
+                </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<style>
+    .cart-item:hover {
+        background-color: #f8f9fa;
+    }
+    
+    .cart-item img:hover {
+        transform: scale(1.05);
+        transition: transform 0.3s;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 2rem;
+        font-size: 1.1rem;
+    }
+    
+    @media (max-width: 768px) {
+        div[style*="grid-template-columns: 2fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+        
+        .cart-item {
+            flex-direction: column !important;
+            text-align: center !important;
+            gap: 1rem;
+        }
+        
+        .cart-item > div {
+            margin: 0 !important;
+        }
+        
+        .card[style*="position: sticky"] {
+            position: static !important;
+        }
+    }
+</style>
 {% endblock %}

@@ -1,38 +1,266 @@
 {% extends 'base.html' %}
-{% block title %}Your Wishlist{% endblock %}
+
+{% block title %}My Wishlist - eCommerce Store{% endblock %}
+
 {% block content %}
-<h2>Your Wishlist</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>❤️ My Wishlist</h2>
+    <a href="{% url 'home' %}" class="btn btn-secondary">
+        ← Continue Shopping
+    </a>
+</div>
+
 {% if items %}
-<table>
-    <thead>
-        <tr>
-            <th>Product</th>
-            <th>Price</th>
-            <th>Status</th>
-            <th>Actions</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for item in items %}
-        <tr>
-            <td>{{ item.product.name }}</td>
-            <td>₹{{ item.product.price }}</td>
-            <td>{% if item.product.is_out_of_stock %}Out of Stock{% else %}In Stock{% endif %}</td>
-            <td>
-                <form action="{% url 'remove_from_wishlist' item.product.id %}" method="post" style="display:inline-block">
-                    {% csrf_token %}<button type="submit">Remove</button>
-                </form>
-                {% if not item.product.is_out_of_stock %}
-                <form action="{% url 'move_to_cart' item.product.id %}" method="post" style="display:inline-block">
-                    {% csrf_token %}<button type="submit">Move to Cart</button>
-                </form>
-                {% endif %}
-            </td>
-        </tr>
-    {% endfor %}
-    </tbody>
-</table>
+    <div class="card mb-3">
+        <div class="card-header d-flex justify-content-between align-items-center">
+            <h4>Saved Items ({{ items|length }})</h4>
+            <div class="text-muted">
+                {{ items|length }} item{{ items|length|pluralize }} in your wishlist
+            </div>
+        </div>
+    </div>
+    
+    <div class="product-grid">
+        {% for item in items %}
+            <div class="product-card wishlist-item">
+                <div style="position: relative;">
+                    {% if item.product.images.first %}
+                        <img src="{{ item.product.images.first.image.url }}" 
+                             alt="{{ item.product.name }}" 
+                             class="product-image">
+                    {% else %}
+                        <div class="product-image" style="background: linear-gradient(45deg, #f0f0f0, #e0e0e0); display: flex; align-items: center; justify-content: center; color: #666;">
+                            📷 No Image
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Stock Status Badge -->
+                    {% if item.product.is_out_of_stock %}
+                        <div style="position: absolute; top: 10px; right: 10px; background: #dc3545; color: white; padding: 0.25rem 0.5rem; border-radius: 15px; font-size: 0.8rem; font-weight: 600;">
+                            ❌ Out of Stock
+                        </div>
+                    {% else %}
+                        <div style="position: absolute; top: 10px; right: 10px; background: #28a745; color: white; padding: 0.25rem 0.5rem; border-radius: 15px; font-size: 0.8rem; font-weight: 600;">
+                            ✅ In Stock
+                        </div>
+                    {% endif %}
+                    
+                    <!-- Added Date -->
+                    <div style="position: absolute; top: 10px; left: 10px; background: rgba(0,0,0,0.7); color: white; padding: 0.25rem 0.5rem; border-radius: 3px; font-size: 0.7rem;">
+                        Added {{ item.added_at|date:"M d" }}
+                    </div>
+                </div>
+                
+                <div class="product-info">
+                    <div style="display: flex; justify-content: space-between; align-items: start; margin-bottom: 0.5rem; font-size: 0.8rem; color: #666;">
+                        <span>{{ item.product.category.name }}</span>
+                        <span>{{ item.product.stock }} left</span>
+                    </div>
+                    
+                    <h4 class="product-title">
+                        <a href="{% url 'product_detail' item.product.slug %}" style="color: inherit; text-decoration: none;">
+                            {{ item.product.name }}
+                        </a>
+                    </h4>
+                    
+                    <div class="product-price">₹{{ item.product.price }}</div>
+                    
+                    <div style="font-size: 0.9rem; color: #666; margin-bottom: 1rem;">
+                        <div><strong>Seller:</strong> {{ item.product.created_by.first_name|default:item.product.created_by.username }}</div>
+                        <div><strong>Category:</strong> {{ item.product.subcategory.name }}</div>
+                    </div>
+                    
+                    <div style="margin-bottom: 1rem; font-size: 0.9rem; color: #666;">
+                        {{ item.product.description|truncatewords:12 }}
+                    </div>
+                    
+                    <!-- Action Buttons -->
+                    <div class="wishlist-actions" style="display: flex; flex-direction: column; gap: 0.5rem;">
+                        {% if not item.product.is_out_of_stock %}
+                            <form action="{% url 'move_to_cart' item.product.id %}" method="post" style="margin: 0;">
+                                {% csrf_token %}
+                                <button type="submit" class="btn btn-success" style="width: 100%;">
+                                    🛒 Move to Cart
+                                </button>
+                            </form>
+                        {% else %}
+                            <button class="btn btn-secondary" disabled style="width: 100%;">
+                                Out of Stock
+                            </button>
+                        {% endif %}
+                        
+                        <div style="display: flex; gap: 0.5rem;">
+                            <a href="{% url 'product_detail' item.product.slug %}" class="btn btn-secondary" style="flex: 1;">
+                                👁️ View
+                            </a>
+                            
+                            <form action="{% url 'remove_from_wishlist' item.product.id %}" method="post" style="flex: 1; margin: 0;">
+                                {% csrf_token %}
+                                <button type="submit" 
+                                        class="btn btn-danger" 
+                                        style="width: 100%;"
+                                        onclick="return confirm('Remove {{ item.product.name }} from wishlist?')">
+                                    🗑️ Remove
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        {% endfor %}
+    </div>
+    
+    <!-- Bulk Actions -->
+    <div class="card mt-4">
+        <div class="card-body">
+            <h5>🚀 Quick Actions</h5>
+            <div class="d-flex" style="gap: 1rem; flex-wrap: wrap;">
+                <a href="{% url 'home' %}" class="btn btn-primary">
+                    🏠 Continue Shopping
+                </a>
+                <a href="{% url 'cart_view' %}" class="btn btn-success">
+                    🛒 View Cart
+                </a>
+                <a href="{% url 'product_list' %}" class="btn btn-secondary">
+                    📦 Browse All Products
+                </a>
+            </div>
+        </div>
+    </div>
+
 {% else %}
-<p>Your wishlist is empty.</p>
+    <!-- Empty Wishlist -->
+    <div class="card">
+        <div class="card-body text-center" style="padding: 4rem 2rem;">
+            <div style="font-size: 6rem; margin-bottom: 2rem; opacity: 0.5;">❤️</div>
+            <h3 style="margin-bottom: 1rem;">Your wishlist is empty</h3>
+            <p class="text-muted" style="margin-bottom: 2rem;">
+                Save items you love by clicking the heart icon.<br>
+                We'll keep them safe here for you!
+            </p>
+            
+            <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
+                <a href="{% url 'home' %}" class="btn btn-primary btn-lg">
+                    🏠 Start Shopping
+                </a>
+                <a href="{% url 'product_list' %}" class="btn btn-secondary btn-lg">
+                    📦 Browse Products
+                </a>
+                <a href="{% url 'cart_view' %}" class="btn btn-secondary btn-lg">
+                    🛒 View Cart
+                </a>
+            </div>
+            
+            <!-- Tips for using wishlist -->
+            <div class="mt-4" style="background: #f8f9fa; padding: 2rem; border-radius: 8px; text-align: left; max-width: 500px; margin: 2rem auto 0;">
+                <h5 style="text-align: center; margin-bottom: 1rem;">💡 Wishlist Tips</h5>
+                <ul style="color: #666; line-height: 1.8;">
+                    <li>Save items you're interested in for later</li>
+                    <li>Get notified when prices drop</li>
+                    <li>Easily move items to cart when ready</li>
+                    <li>Share your wishlist with friends and family</li>
+                </ul>
+            </div>
+        </div>
+    </div>
 {% endif %}
+
+<!-- Recently Viewed Products -->
+<div class="card mt-4">
+    <div class="card-header">
+        <h4>👀 Recently Viewed</h4>
+    </div>
+    <div class="card-body">
+        <div class="product-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">
+            <!-- This would be populated with recently viewed products -->
+            <div class="text-center text-muted" style="grid-column: 1 / -1; padding: 2rem;">
+                Your recently viewed products will appear here
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .wishlist-item {
+        transition: all 0.3s ease;
+    }
+    
+    .wishlist-item:hover {
+        transform: translateY(-8px);
+        box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    }
+    
+    .product-title a:hover {
+        color: #007bff !important;
+    }
+    
+    .wishlist-actions .btn {
+        font-size: 0.9rem;
+        padding: 0.5rem;
+    }
+    
+    .btn-lg {
+        padding: 0.75rem 2rem;
+        font-size: 1.1rem;
+    }
+    
+    /* Animation for remove action */
+    .wishlist-item.removing {
+        opacity: 0.5;
+        transform: scale(0.95);
+        transition: all 0.3s ease;
+    }
+    
+    @media (max-width: 768px) {
+        .product-grid {
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+        }
+        
+        .wishlist-actions {
+            flex-direction: column !important;
+        }
+        
+        .wishlist-actions > div {
+            flex-direction: column !important;
+        }
+        
+        .wishlist-actions .btn {
+            width: 100% !important;
+            flex: none !important;
+        }
+    }
+</style>
+
+<script>
+    // Add smooth animation when removing items
+    document.querySelectorAll('form[action*="remove_from_wishlist"] button').forEach(button => {
+        button.addEventListener('click', function(e) {
+            const card = this.closest('.wishlist-item');
+            if (card && confirm('Remove ' + card.querySelector('.product-title a').textContent.trim() + ' from wishlist?')) {
+                card.classList.add('removing');
+                // Let the form submit naturally after the animation
+                setTimeout(() => {
+                    // Form will submit automatically
+                }, 300);
+            } else {
+                e.preventDefault();
+            }
+        });
+    });
+    
+    // Add to cart success animation
+    document.querySelectorAll('form[action*="move_to_cart"] button').forEach(button => {
+        button.addEventListener('click', function(e) {
+            const originalText = this.innerHTML;
+            this.innerHTML = '⏳ Moving...';
+            this.disabled = true;
+            
+            // Re-enable after form submission (in case of errors)
+            setTimeout(() => {
+                this.innerHTML = originalText;
+                this.disabled = false;
+            }, 3000);
+        });
+    });
+</script>
 {% endblock %}

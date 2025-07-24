@@ -1,10 +1,183 @@
 {% extends 'base.html' %}
 {% block title %}Login{% endblock %}
 {% block content %}
-<h2>Login to Your Account</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form }}
-  <button type="submit">Login</button>
-</form>
+<div style="max-width: 450px; margin: 0 auto;">
+    <div style="background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden;">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; padding: 40px 30px; text-align: center;">
+            <h2 style="margin: 0 0 10px 0; font-size: 2.2em;">Welcome Back</h2>
+            <p style="margin: 0; opacity: 0.9; font-size: 1.1em;">Sign in to your account</p>
+        </div>
+
+        <!-- Form Container -->
+        <div style="padding: 40px;">
+            {% if form.errors %}
+                <div style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+                    <div style="display: flex; align-items: center; gap: 10px;">
+                        <span style="font-size: 1.2em;">⚠️</span>
+                        <div>
+                            <strong>Login Failed</strong>
+                            {% for field, errors in form.errors.items %}
+                                {% for error in errors %}
+                                    <p style="margin: 5px 0 0 0;">{{ error }}</p>
+                                {% endfor %}
+                            {% endfor %}
+                        </div>
+                    </div>
+                </div>
+            {% endif %}
+
+            {% if messages %}
+                {% for message in messages %}
+                    <div style="background: {% if message.tags == 'success' %}#d4edda; border-color: #c3e6cb; color: #155724;{% elif message.tags == 'error' %}#f8d7da; border-color: #f5c6cb; color: #721c24;{% else %}#d1ecf1; border-color: #bee5eb; color: #0c5460;{% endif %} border: 1px solid; padding: 15px; border-radius: 8px; margin-bottom: 25px;">
+                        <div style="display: flex; align-items: center; gap: 10px;">
+                            <span style="font-size: 1.2em;">
+                                {% if message.tags == 'success' %}✅{% elif message.tags == 'error' %}❌{% else %}ℹ️{% endif %}
+                            </span>
+                            <span>{{ message }}</span>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endif %}
+
+            <form method="post" style="margin: 0;">
+                {% csrf_token %}
+                
+                <!-- Username Field -->
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #333; font-size: 1em;">
+                        <span style="margin-right: 5px;">👤</span> Username
+                    </label>
+                    <input type="text" name="username" value="{{ form.username.value|default:'' }}" 
+                           style="width: 100%; padding: 15px; border: 2px solid #dee2e6; border-radius: 10px; font-size: 1.1em; box-sizing: border-box; transition: all 0.3s ease;"
+                           placeholder="Enter your username" 
+                           required
+                           onfocus="this.style.borderColor='#007bff'; this.style.boxShadow='0 0 0 3px rgba(0, 123, 255, 0.1)'"
+                           onblur="this.style.borderColor='#dee2e6'; this.style.boxShadow='none'">
+                </div>
+
+                <!-- Password Field -->
+                <div style="margin-bottom: 30px;">
+                    <label style="display: block; margin-bottom: 8px; font-weight: bold; color: #333; font-size: 1em;">
+                        <span style="margin-right: 5px;">🔒</span> Password
+                    </label>
+                    <div style="position: relative;">
+                        <input type="password" name="password" id="password"
+                               style="width: 100%; padding: 15px; border: 2px solid #dee2e6; border-radius: 10px; font-size: 1.1em; box-sizing: border-box; transition: all 0.3s ease; padding-right: 50px;"
+                               placeholder="Enter your password" 
+                               required
+                               onfocus="this.style.borderColor='#007bff'; this.style.boxShadow='0 0 0 3px rgba(0, 123, 255, 0.1)'"
+                               onblur="this.style.borderColor='#dee2e6'; this.style.boxShadow='none'">
+                        <button type="button" id="togglePassword" 
+                                style="position: absolute; right: 15px; top: 50%; transform: translateY(-50%); background: none; border: none; font-size: 1.2em; cursor: pointer; color: #6c757d;"
+                                onclick="togglePasswordVisibility()">👁️</button>
+                    </div>
+                </div>
+
+                <!-- Remember Me & Forgot Password -->
+                <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; flex-wrap: wrap; gap: 15px;">
+                    <label style="display: flex; align-items: center; gap: 8px; cursor: pointer; color: #333;">
+                        <input type="checkbox" name="remember_me" style="margin: 0;">
+                        <span style="font-size: 0.95em;">Remember me</span>
+                    </label>
+                    <a href="#" style="color: #007bff; text-decoration: none; font-size: 0.95em; font-weight: 500;"
+                       onmouseover="this.style.textDecoration='underline'" 
+                       onmouseout="this.style.textDecoration='none'">
+                        Forgot password?
+                    </a>
+                </div>
+
+                <!-- Login Button -->
+                <button type="submit" 
+                        style="width: 100%; background: linear-gradient(135deg, #007bff 0%, #0056b3 100%); color: white; border: none; padding: 18px; border-radius: 10px; font-size: 1.2em; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(0, 123, 255, 0.3); transition: all 0.3s ease;"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(0, 123, 255, 0.4)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(0, 123, 255, 0.3)'">
+                    🚀 Sign In
+                </button>
+            </form>
+
+            <!-- Divider -->
+            <div style="text-align: center; margin: 30px 0; position: relative;">
+                <div style="height: 1px; background: #dee2e6;"></div>
+                <span style="background: white; padding: 0 20px; color: #6c757d; position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);">
+                    or
+                </span>
+            </div>
+
+            <!-- Register Link -->
+            <div style="text-align: center;">
+                <p style="color: #666; margin: 0 0 15px 0; font-size: 1em;">
+                    Don't have an account?
+                </p>
+                <a href="{% url 'register' %}" 
+                   style="display: inline-block; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; font-weight: bold; font-size: 1em; box-shadow: 0 3px 10px rgba(40, 167, 69, 0.3); transition: all 0.3s ease;"
+                   onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 5px 15px rgba(40, 167, 69, 0.4)'"
+                   onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 3px 10px rgba(40, 167, 69, 0.3)'">
+                    📝 Create New Account
+                </a>
+            </div>
+
+            <!-- User Type Info -->
+            <div style="background: #f8f9fa; border-radius: 10px; padding: 20px; margin-top: 25px;">
+                <h4 style="margin: 0 0 15px 0; color: #333; text-align: center;">Account Types</h4>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                    <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; border: 1px solid #dee2e6;">
+                        <div style="font-size: 2em; margin-bottom: 8px;">🛒</div>
+                        <div style="font-weight: bold; color: #333; margin-bottom: 5px;">Customer</div>
+                        <div style="font-size: 0.85em; color: #666;">Shop and buy products</div>
+                    </div>
+                    <div style="text-align: center; padding: 15px; background: white; border-radius: 8px; border: 1px solid #dee2e6;">
+                        <div style="font-size: 2em; margin-bottom: 8px;">🏪</div>
+                        <div style="font-weight: bold; color: #333; margin-bottom: 5px;">Supplier</div>
+                        <div style="font-size: 0.85em; color: #666;">Sell your products</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    input:focus {
+        outline: none !important;
+    }
+    
+    @media (max-width: 768px) {
+        .container {
+            padding: 15px;
+        }
+        
+        div[style*="flex-wrap: wrap"] {
+            flex-direction: column;
+            align-items: flex-start;
+        }
+        
+        div[style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr;
+        }
+    }
+</style>
+
+<script>
+    function togglePasswordVisibility() {
+        const passwordInput = document.getElementById('password');
+        const toggleButton = document.getElementById('togglePassword');
+        
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            toggleButton.textContent = '🙈';
+        } else {
+            passwordInput.type = 'password';
+            toggleButton.textContent = '👁️';
+        }
+    }
+
+    // Auto-focus username field when page loads
+    document.addEventListener('DOMContentLoaded', function() {
+        const usernameInput = document.querySelector('input[name="username"]');
+        if (usernameInput && !usernameInput.value) {
+            usernameInput.focus();
+        }
+    });
+</script>
 {% endblock %}

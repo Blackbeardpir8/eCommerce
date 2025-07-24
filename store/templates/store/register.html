@@ -1,10 +1,204 @@
 {% extends 'base.html' %}
-{% block title %}Register{% endblock %}
+{% block title %}Create Account{% endblock %}
 {% block content %}
-<h2>Create an Account</h2>
-<form method="post">
-  {% csrf_token %}
-  {{ form }}
-  <button type="submit">Register</button>
-</form>
+<div style="max-width: 500px; margin: 0 auto;">
+    <div style="background: white; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); overflow: hidden;">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); color: white; padding: 30px; text-align: center;">
+            <h2 style="margin: 0 0 10px 0; font-size: 2em;">Create Account</h2>
+            <p style="margin: 0; opacity: 0.9;">Join our marketplace today</p>
+        </div>
+
+        <!-- Form Container -->
+        <div style="padding: 40px;">
+            {% if form.errors %}
+                <div style="background: #f8d7da; border: 1px solid #f5c6cb; color: #721c24; padding: 15px; border-radius: 8px; margin-bottom: 20px;">
+                    <strong>Please fix the following errors:</strong>
+                    <ul style="margin: 10px 0 0 20px;">
+                        {% for field, errors in form.errors.items %}
+                            {% for error in errors %}
+                                <li>{{ error }}</li>
+                            {% endfor %}
+                        {% endfor %}
+                    </ul>
+                </div>
+            {% endif %}
+
+            <form method="post" style="margin: 0;">
+                {% csrf_token %}
+                
+                <!-- User Type Selection -->
+                <div style="margin-bottom: 25px;">
+                    <label style="display: block; margin-bottom: 10px; font-weight: bold; color: #333;">Account Type</label>
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <label style="border: 2px solid #dee2e6; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease;" 
+                               for="id_user_type_0" onmouseover="this.style.borderColor='#007bff'" onmouseout="this.style.borderColor='#dee2e6'">
+                            <input type="radio" name="user_type" value="customer" id="id_user_type_0" 
+                                   style="margin: 0 0 10px 0;" {% if form.user_type.value == 'customer' %}checked{% endif %}>
+                            <div style="font-size: 2em; margin-bottom: 5px;">🛒</div>
+                            <div style="font-weight: bold; color: #333;">Customer</div>
+                            <div style="font-size: 0.85em; color: #666;">Shop and buy products</div>
+                        </label>
+                        
+                        <label style="border: 2px solid #dee2e6; border-radius: 10px; padding: 20px; text-align: center; cursor: pointer; transition: all 0.3s ease;" 
+                               for="id_user_type_1" onmouseover="this.style.borderColor='#007bff'" onmouseout="this.style.borderColor='#dee2e6'">
+                            <input type="radio" name="user_type" value="supplier" id="id_user_type_1" 
+                                   style="margin: 0 0 10px 0;" {% if form.user_type.value == 'supplier' %}checked{% endif %}>
+                            <div style="font-size: 2em; margin-bottom: 5px;">🏪</div>
+                            <div style="font-weight: bold; color: #333;">Supplier</div>
+                            <div style="font-size: 0.85em; color: #666;">Sell your products</div>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Personal Information -->
+                <div style="margin-bottom: 25px;">
+                    <h4 style="color: #333; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #f8f9fa;">Personal Information</h4>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-bottom: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">First Name</label>
+                            <input type="text" name="first_name" value="{{ form.first_name.value|default:'' }}" 
+                                   style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 1em; box-sizing: border-box;"
+                                   placeholder="Enter first name">
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Last Name</label>
+                            <input type="text" name="last_name" value="{{ form.last_name.value|default:'' }}" 
+                                   style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 1em; box-sizing: border-box;"
+                                   placeholder="Enter last name">
+                        </div>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Username</label>
+                        <input type="text" name="username" value="{{ form.username.value|default:'' }}" 
+                               style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 1em; box-sizing: border-box;"
+                               placeholder="Choose a username" required>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Email Address</label>
+                        <input type="email" name="email" value="{{ form.email.value|default:'' }}" 
+                               style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 1em; box-sizing: border-box;"
+                               placeholder="Enter email address" required>
+                    </div>
+                    
+                    <div style="margin-bottom: 15px;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Phone Number</label>
+                        <input type="tel" name="phone" value="{{ form.phone.value|default:'' }}" 
+                               style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 1em; box-sizing: border-box;"
+                               placeholder="Enter phone number (optional)">
+                    </div>
+                </div>
+
+                <!-- Security -->
+                <div style="margin-bottom: 25px;">
+                    <h4 style="color: #333; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #f8f9fa;">Security</h4>
+                    
+                    <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Password</label>
+                            <input type="password" name="password" 
+                                   style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 1em; box-sizing: border-box;"
+                                   placeholder="Create password" required>
+                        </div>
+                        <div>
+                            <label style="display: block; margin-bottom: 5px; font-weight: bold; color: #333;">Confirm Password</label>
+                            <input type="password" name="confirm_password" 
+                                   style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 1em; box-sizing: border-box;"
+                                   placeholder="Confirm password" required>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Address -->
+                <div style="margin-bottom: 30px;">
+                    <h4 style="color: #333; margin-bottom: 15px; padding-bottom: 8px; border-bottom: 2px solid #f8f9fa;">Address (Optional)</h4>
+                    <textarea name="address" 
+                              style="width: 100%; padding: 12px; border: 2px solid #dee2e6; border-radius: 8px; font-size: 1em; box-sizing: border-box; min-height: 80px; resize: vertical;"
+                              placeholder="Enter your address (optional)">{{ form.address.value|default:'' }}</textarea>
+                </div>
+
+                <!-- Submit Button -->
+                <button type="submit" 
+                        style="width: 100%; background: linear-gradient(135deg, #28a745 0%, #20c997 100%); color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1.1em; font-weight: bold; cursor: pointer; box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3); transition: all 0.3s ease;"
+                        onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 6px 20px rgba(40, 167, 69, 0.4)'"
+                        onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 4px 15px rgba(40, 167, 69, 0.3)'">
+                    🚀 Create Account
+                </button>
+            </form>
+
+            <!-- Login Link -->
+            <div style="text-align: center; margin-top: 25px; padding-top: 20px; border-top: 1px solid #dee2e6;">
+                <p style="color: #666; margin: 0;">
+                    Already have an account? 
+                    <a href="{% url 'login' %}" style="color: #007bff; text-decoration: none; font-weight: bold;">
+                        Sign in here
+                    </a>
+                </p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    input:focus, textarea:focus {
+        outline: none;
+        border-color: #007bff !important;
+        box-shadow: 0 0 0 3px rgba(0, 123, 255, 0.1);
+    }
+    
+    input[type="radio"]:checked + div {
+        color: #007bff !important;
+    }
+    
+    label:has(input[type="radio"]:checked) {
+        border-color: #007bff !important;
+        background: #f0f8ff;
+    }
+    
+    @media (max-width: 768px) {
+        div[style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr;
+        }
+        
+        .container {
+            padding: 15px;
+        }
+    }
+</style>
+
+<script>
+    // Enhanced form interactions
+    document.addEventListener('DOMContentLoaded', function() {
+        // Radio button styling
+        const radioLabels = document.querySelectorAll('label[for^="id_user_type"]');
+        radioLabels.forEach(label => {
+            const radio = label.querySelector('input[type="radio"]');
+            radio.addEventListener('change', function() {
+                radioLabels.forEach(l => {
+                    l.style.borderColor = '#dee2e6';
+                    l.style.background = 'white';
+                });
+                if (this.checked) {
+                    label.style.borderColor = '#007bff';
+                    label.style.background = '#f0f8ff';
+                }
+            });
+        });
+        
+        // Password confirmation
+        const password = document.querySelector('input[name="password"]');
+        const confirmPassword = document.querySelector('input[name="confirm_password"]');
+        
+        confirmPassword.addEventListener('input', function() {
+            if (this.value && password.value !== this.value) {
+                this.style.borderColor = '#dc3545';
+            } else {
+                this.style.borderColor = '#dee2e6';
+            }
+        });
+    });
+</script>
 {% endblock %}

@@ -1,20 +1,348 @@
 {% extends 'base.html' %}
-{% block title %}{{ title }}{% endblock %}
+
+{% block title %}{{ title }} - eCommerce Store{% endblock %}
+
 {% block content %}
-<h2>{{ title }}</h2>
+<div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>
+        {% if title == 'Add Product' %}
+            ➕ {{ title }}
+        {% else %}
+            ✏️ {{ title }}
+        {% endif %}
+    </h2>
+    <a href="{% url 'supplier_products' %}" class="btn btn-secondary">
+        ← Back to My Products
+    </a>
+</div>
+
 <form method="post" enctype="multipart/form-data">
-  {% csrf_token %}
-  {{ form }}
+    {% csrf_token %}
+    
+    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+        <!-- Main Product Information -->
+        <div class="card">
+            <div class="card-header">
+                <h4>📝 Product Information</h4>
+            </div>
+            <div class="card-body">
+                <!-- Product Name -->
+                <div class="form-group">
+                    <label for="{{ form.name.id_for_label }}">
+                        <strong>Product Name</strong> <span style="color: red;">*</span>
+                    </label>
+                    {{ form.name }}
+                    {% if form.name.errors %}
+                        <div style="color: #dc3545; font-size: 0.9rem; margin-top: 0.25rem;">
+                            {{ form.name.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
 
-  {% if formset %}
-    <h4>Images:</h4>
-    {{ formset.management_form }}
-    {% for form in formset %}
-      {{ form }}
-    {% endfor %}
-  {% endif %}
+                <!-- Description -->
+                <div class="form-group">
+                    <label for="{{ form.description.id_for_label }}">
+                        <strong>Description</strong> <span style="color: red;">*</span>
+                    </label>
+                    {{ form.description }}
+                    <small class="text-muted">Provide a detailed description of your product</small>
+                    {% if form.description.errors %}
+                        <div style="color: #dc3545; font-size: 0.9rem; margin-top: 0.25rem;">
+                            {{ form.description.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
 
-  <button type="submit">Save</button>
+                <!-- Category and Subcategory -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="{{ form.category.id_for_label }}">
+                            <strong>Category</strong> <span style="color: red;">*</span>
+                        </label>
+                        {{ form.category }}
+                        {% if form.category.errors %}
+                            <div style="color: #dc3545; font-size: 0.9rem; margin-top: 0.25rem;">
+                                {{ form.category.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.subcategory.id_for_label }}">
+                            <strong>Subcategory</strong> <span style="color: red;">*</span>
+                        </label>
+                        {{ form.subcategory }}
+                        {% if form.subcategory.errors %}
+                            <div style="color: #dc3545; font-size: 0.9rem; margin-top: 0.25rem;">
+                                {{ form.subcategory.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Price and Stock -->
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label for="{{ form.price.id_for_label }}">
+                            <strong>Price (₹)</strong> <span style="color: red;">*</span>
+                        </label>
+                        {{ form.price }}
+                        {% if form.price.errors %}
+                            <div style="color: #dc3545; font-size: 0.9rem; margin-top: 0.25rem;">
+                                {{ form.price.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+
+                    <div class="form-group">
+                        <label for="{{ form.stock.id_for_label }}">
+                            <strong>Stock Quantity</strong> <span style="color: red;">*</span>
+                        </label>
+                        {{ form.stock }}
+                        {% if form.stock.errors %}
+                            <div style="color: #dc3545; font-size: 0.9rem; margin-top: 0.25rem;">
+                                {{ form.stock.errors.0 }}
+                            </div>
+                        {% endif %}
+                    </div>
+                </div>
+
+                <!-- Slug (Auto-generated) -->
+                <div class="form-group">
+                    <label for="{{ form.slug.id_for_label }}">
+                        <strong>URL Slug</strong>
+                    </label>
+                    {{ form.slug }}
+                    <small class="text-muted">Leave blank to auto-generate from product name</small>
+                    {% if form.slug.errors %}
+                        <div style="color: #dc3545; font-size: 0.9rem; margin-top: 0.25rem;">
+                            {{ form.slug.errors.0 }}
+                        </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Product Images -->
+        <div class="card" style="height: fit-content;">
+            <div class="card-header">
+                <h4>📷 Product Images</h4>
+            </div>
+            <div class="card-body">
+                {% if formset %}
+                    {{ formset.management_form }}
+                    
+                    <div id="image-forms">
+                        {% for form in formset %}
+                            <div class="image-form-row" style="margin-bottom: 1rem; padding: 1rem; border: 1px solid #dee2e6; border-radius: 5px;">
+                                <div class="form-group">
+                                    {% if form.instance.pk and form.instance.image %}
+                                        <div style="margin-bottom: 1rem;">
+                                            <img src="{{ form.instance.image.url }}" 
+                                                 alt="Product Image" 
+                                                 style="width: 100px; height: 100px; object-fit: cover; border-radius: 5px;">
+                                        </div>
+                                    {% endif %}
+                                    
+                                    <label>Image {{ forloop.counter }}</label>
+                                    {{ form.image }}
+                                    
+                                    {% if form.DELETE %}
+                                        <div style="margin-top: 0.5rem;">
+                                            {{ form.DELETE }}
+                                            <label for="{{ form.DELETE.id_for_label }}" style="color: #dc3545; font-weight: normal;">
+                                                Delete this image
+                                            </label>
+                                        </div>
+                                    {% endif %}
+                                    
+                                    {% if form.image.errors %}
+                                        <div style="color: #dc3545; font-size: 0.9rem; margin-top: 0.25rem;">
+                                            {{ form.image.errors.0 }}
+                                        </div>
+                                    {% endif %}
+                                </div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                    
+                    <div class="text-muted mt-3" style="font-size: 0.9rem;">
+                        <strong>Tips:</strong>
+                        <ul style="margin: 0.5rem 0 0 1rem;">
+                            <li>Upload up to 5 high-quality images</li>
+                            <li>Recommended size: 800x800 pixels</li>
+                            <li>Formats: JPG, PNG, WebP</li>
+                            <li>First image will be the main product image</li>
+                        </ul>
+                    </div>
+                {% else %}
+                    <div class="text-muted">
+                        <p>Add images after creating the product.</p>
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Form Actions -->
+    <div class="card mt-3">
+        <div class="card-body">
+            <div class="d-flex justify-content-between align-items-center">
+                <div class="text-muted">
+                    <small>* Required fields</small>
+                </div>
+                
+                <div style="display: flex; gap: 1rem;">
+                    <a href="{% url 'supplier_products' %}" class="btn btn-secondary">
+                        ❌ Cancel
+                    </a>
+                    <button type="submit" class="btn btn-success">
+                        {% if title == 'Add Product' %}
+                            ➕ Add Product
+                        {% else %}
+                            💾 Update Product
+                        {% endif %}
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
 </form>
-<a href="{% url 'product_list' %}">Back to Product List</a>
+
+<!-- Form Help -->
+<div class="card mt-3">
+    <div class="card-header">
+        <h5>💡 Tips for Better Product Listings</h5>
+    </div>
+    <div class="card-body">
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
+            <div>
+                <h6>📝 Product Name</h6>
+                <ul style="font-size: 0.9rem; color: #666;">
+                    <li>Keep it clear and descriptive</li>
+                    <li>Include key features or brand</li>
+                    <li>Avoid excessive capitalization</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h6>📷 Images</h6>
+                <ul style="font-size: 0.9rem; color: #666;">
+                    <li>Use high-resolution photos</li>
+                    <li>Show product from multiple angles</li>
+                    <li>Include lifestyle or usage shots</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h6>💰 Pricing</h6>
+                <ul style="font-size: 0.9rem; color: #666;">
+                    <li>Research competitor prices</li>
+                    <li>Consider your costs and profit</li>
+                    <li>Price competitively for your market</li>
+                </ul>
+            </div>
+            
+            <div>
+                <h6>📦 Stock Management</h6>
+                <ul style="font-size: 0.9rem; color: #666;">
+                    <li>Keep stock levels updated</li>
+                    <li>Set realistic quantities</li>
+                    <li>Monitor inventory regularly</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+    .form-control:focus {
+        border-color: #007bff;
+        box-shadow: 0 0 0 0.2rem rgba(0,123,255,0.25);
+    }
+    
+    .image-form-row {
+        transition: all 0.3s ease;
+    }
+    
+    .image-form-row:hover {
+        background-color: #f8f9fa;
+    }
+    
+    @media (max-width: 768px) {
+        div[style*="grid-template-columns: 2fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+        
+        div[style*="grid-template-columns: 1fr 1fr"] {
+            grid-template-columns: 1fr !important;
+        }
+    }
+</style>
+
+<script>
+    // Dynamic subcategory loading
+    document.getElementById('{{ form.category.id_for_label }}').addEventListener('change', function() {
+        const categoryId = this.value;
+        const subcategorySelect = document.getElementById('{{ form.subcategory.id_for_label }}');
+        
+        // Clear current options
+        subcategorySelect.innerHTML = '<option value="">---------</option>';
+        
+        if (categoryId) {
+            // Make AJAX request to get subcategories
+            fetch(`/ajax/load-subcategories/?category_id=${categoryId}`)
+                .then(response => response.json())
+                .then(data => {
+                    data.forEach(subcategory => {
+                        const option = document.createElement('option');
+                        option.value = subcategory.id;
+                        option.textContent = subcategory.name;
+                        subcategorySelect.appendChild(option);
+                    });
+                })
+                .catch(error => console.error('Error loading subcategories:', error));
+        }
+    });
+    
+    // Auto-generate slug from product name
+    document.getElementById('{{ form.name.id_for_label }}').addEventListener('input', function() {
+        const slugField = document.getElementById('{{ form.slug.id_for_label }}');
+        if (!slugField.value || slugField.dataset.autoGenerated) {
+            const slug = this.value
+                .toLowerCase()
+                .replace(/[^a-z0-9\s-]/g, '') // Remove special characters
+                .replace(/\s+/g, '-') // Replace spaces with hyphens
+                .replace(/-+/g, '-'); // Replace multiple hyphens with single
+            slugField.value = slug;
+            slugField.dataset.autoGenerated = 'true';
+        }
+    });
+    
+    // Clear auto-generated flag when user manually edits slug
+    document.getElementById('{{ form.slug.id_for_label }}').addEventListener('input', function() {
+        this.dataset.autoGenerated = 'false';
+    });
+    
+    // Form validation
+    document.querySelector('form').addEventListener('submit', function(e) {
+        const requiredFields = ['{{ form.name.id_for_label }}', '{{ form.description.id_for_label }}', '{{ form.category.id_for_label }}', '{{ form.subcategory.id_for_label }}', '{{ form.price.id_for_label }}', '{{ form.stock.id_for_label }}'];
+        let isValid = true;
+        
+        requiredFields.forEach(fieldId => {
+            const field = document.getElementById(fieldId);
+            if (!field.value.trim()) {
+                field.style.borderColor = '#dc3545';
+                isValid = false;
+            } else {
+                field.style.borderColor = '#ced4da';
+            }
+        });
+        
+        if (!isValid) {
+            e.preventDefault();
+            alert('Please fill in all required fields.');
+        }
+    });
+</script>
 {% endblock %}
