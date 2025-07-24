@@ -4,7 +4,7 @@
 
 {% block content %}
 <div class="d-flex justify-content-between align-items-center mb-3">
-    <h2>❤️ My Wishlist</h2>
+    <h2> My Wishlist</h2>
     <a href="{% url 'home' %}" class="btn btn-secondary">
         ← Continue Shopping
     </a>
@@ -91,7 +91,7 @@
                         
                         <div style="display: flex; gap: 0.5rem;">
                             <a href="{% url 'product_detail' item.product.slug %}" class="btn btn-secondary" style="flex: 1;">
-                                👁️ View
+                                View
                             </a>
                             
                             <form action="{% url 'remove_from_wishlist' item.product.id %}" method="post" style="flex: 1; margin: 0;">
@@ -100,7 +100,7 @@
                                         class="btn btn-danger" 
                                         style="width: 100%;"
                                         onclick="return confirm('Remove {{ item.product.name }} from wishlist?')">
-                                    🗑️ Remove
+                                    Remove
                                 </button>
                             </form>
                         </div>
@@ -113,7 +113,7 @@
     <!-- Bulk Actions -->
     <div class="card mt-4">
         <div class="card-body">
-            <h5>🚀 Quick Actions</h5>
+            <h5>Quick Actions</h5>
             <div class="d-flex" style="gap: 1rem; flex-wrap: wrap;">
                 <a href="{% url 'home' %}" class="btn btn-primary">
                     🏠 Continue Shopping
@@ -141,13 +141,13 @@
             
             <div style="display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap;">
                 <a href="{% url 'home' %}" class="btn btn-primary btn-lg">
-                    🏠 Start Shopping
+                    Start Shopping
                 </a>
                 <a href="{% url 'product_list' %}" class="btn btn-secondary btn-lg">
-                    📦 Browse Products
+                    Browse Products
                 </a>
                 <a href="{% url 'cart_view' %}" class="btn btn-secondary btn-lg">
-                    🛒 View Cart
+                    View Cart
                 </a>
             </div>
             
@@ -168,7 +168,7 @@
 <!-- Recently Viewed Products -->
 <div class="card mt-4">
     <div class="card-header">
-        <h4>👀 Recently Viewed</h4>
+        <h4>Recently Viewed</h4>
     </div>
     <div class="card-body">
         <div class="product-grid" style="grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));">

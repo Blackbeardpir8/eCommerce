@@ -6,9 +6,9 @@
 <div class="d-flex justify-content-between align-items-center mb-3">
     <h2>
         {% if title == 'Add Product' %}
-            ➕ {{ title }}
+        {{ title }}
         {% else %}
-            ✏️ {{ title }}
+        {{ title }}
         {% endif %}
     </h2>
     <a href="{% url 'supplier_products' %}" class="btn btn-secondary">
@@ -23,7 +23,7 @@
         <!-- Main Product Information -->
         <div class="card">
             <div class="card-header">
-                <h4>📝 Product Information</h4>
+                <h4>Product Information</h4>
             </div>
             <div class="card-body">
                 <!-- Product Name -->
@@ -126,7 +126,7 @@
         <!-- Product Images -->
         <div class="card" style="height: fit-content;">
             <div class="card-header">
-                <h4>📷 Product Images</h4>
+                <h4>Product Images</h4>
             </div>
             <div class="card-body">
                 {% if formset %}
@@ -194,13 +194,13 @@
                 
                 <div style="display: flex; gap: 1rem;">
                     <a href="{% url 'supplier_products' %}" class="btn btn-secondary">
-                        ❌ Cancel
+                        Cancel
                     </a>
                     <button type="submit" class="btn btn-success">
                         {% if title == 'Add Product' %}
-                            ➕ Add Product
+                            Add Product
                         {% else %}
-                            💾 Update Product
+                            Update Product
                         {% endif %}
                     </button>
                 </div>
@@ -212,12 +212,12 @@
 <!-- Form Help -->
 <div class="card mt-3">
     <div class="card-header">
-        <h5>💡 Tips for Better Product Listings</h5>
+        <h5>Tips for Better Product Listings</h5>
     </div>
     <div class="card-body">
         <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 1.5rem;">
             <div>
-                <h6>📝 Product Name</h6>
+                <h6>Product Name</h6>
                 <ul style="font-size: 0.9rem; color: #666;">
                     <li>Keep it clear and descriptive</li>
                     <li>Include key features or brand</li>
@@ -226,7 +226,7 @@
             </div>
             
             <div>
-                <h6>📷 Images</h6>
+                <h6>Images</h6>
                 <ul style="font-size: 0.9rem; color: #666;">
                     <li>Use high-resolution photos</li>
                     <li>Show product from multiple angles</li>
@@ -235,7 +235,7 @@
             </div>
             
             <div>
-                <h6>💰 Pricing</h6>
+                <h6>Pricing</h6>
                 <ul style="font-size: 0.9rem; color: #666;">
                     <li>Research competitor prices</li>
                     <li>Consider your costs and profit</li>
@@ -244,7 +244,7 @@
             </div>
             
             <div>
-                <h6>📦 Stock Management</h6>
+                <h6>Stock Management</h6>
                 <ul style="font-size: 0.9rem; color: #666;">
                     <li>Keep stock levels updated</li>
                     <li>Set realistic quantities</li>

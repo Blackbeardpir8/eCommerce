@@ -73,7 +73,7 @@ class ProductAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name', 'description', 'created_by__username', 'created_by__first_name', 'created_by__last_name')
     list_filter = ('category', 'subcategory', 'created_at', 'created_by__profile__user_type')
-    readonly_fields = ('created_at', 'updated_at', 'slug')
+    #readonly_fields = ('created_at', 'updated_at', 'slug')
     date_hierarchy = 'created_at'
     ordering = ('-created_at',)
     
@@ -120,7 +120,8 @@ class CategoryAdmin(admin.ModelAdmin):
     prepopulated_fields = {'slug': ('name',)}
     search_fields = ('name',)
     list_display = ('name', 'get_image_preview', 'get_products_count', 'get_subcategories_count')
-    readonly_fields = ('slug', 'get_image_preview')
+    #readonly_fields = ('slug', 'get_image_preview')
+    
     
     def get_image_preview(self, obj):
         if obj.image:
@@ -151,7 +152,7 @@ class SubCategoryAdmin(admin.ModelAdmin):
     list_display = ('name', 'category', 'get_products_count')
     search_fields = ('name', 'category__name')
     list_filter = ('category',)
-    readonly_fields = ('slug',)
+    #readonly_fields = ('slug',)
     
     def get_products_count(self, obj):
         count = obj.products.count()

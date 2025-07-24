@@ -64,6 +64,10 @@ class ProductForm(forms.ModelForm):
             'description': forms.Textarea(attrs={'rows': 4}),
             'price': forms.NumberInput(attrs={'step': '0.01'}),
         }
+    
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['slug'].disabled = True
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
@@ -92,8 +96,16 @@ class CategoryForm(forms.ModelForm):
         model = Category
         fields = ['name', 'image','slug']
 
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['slug'].disabled = True
+
 # SubCategory Form
 class SubCategoryForm(forms.ModelForm):
     class Meta:
         model = SubCategory
-        fields = ['name', 'category','slug']
+        fields = ['name', 'category', 'slug']
+
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+        self.fields['slug'].disabled = True
