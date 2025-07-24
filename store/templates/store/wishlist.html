@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+{% block title %}Your Wishlist{% endblock %}
+{% block content %}
+<h2>Your Wishlist</h2>
+{% if items %}
+<table>
+    <thead>
+        <tr>
+            <th>Product</th>
+            <th>Price</th>
+            <th>Status</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for item in items %}
+        <tr>
+            <td>{{ item.product.name }}</td>
+            <td>₹{{ item.product.price }}</td>
+            <td>{% if item.product.is_out_of_stock %}Out of Stock{% else %}In Stock{% endif %}</td>
+            <td>
+                <form action="{% url 'remove_from_wishlist' item.product.id %}" method="post" style="display:inline-block">
+                    {% csrf_token %}<button type="submit">Remove</button>
+                </form>
+                {% if not item.product.is_out_of_stock %}
+                <form action="{% url 'move_to_cart' item.product.id %}" method="post" style="display:inline-block">
+                    {% csrf_token %}<button type="submit">Move to Cart</button>
+                </form>
+                {% endif %}
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% else %}
+<p>Your wishlist is empty.</p>
+{% endif %}
+{% endblock %}

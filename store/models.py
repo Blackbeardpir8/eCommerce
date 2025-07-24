@@ -1,9 +1,25 @@
+# store/models.py
 from django.db import models
 from django.contrib.auth.models import User
 from django.utils.text import slugify
 from django.conf import settings
 
 # Create your models here.
+
+# User Profile Model for roles
+class UserProfile(models.Model):
+    USER_TYPES = (
+        ('customer', 'Customer'),
+        ('supplier', 'Supplier'),
+    )
+    
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='profile')
+    user_type = models.CharField(max_length=10, choices=USER_TYPES, default='customer')
+    phone = models.CharField(max_length=15, blank=True, null=True)
+    address = models.TextField(blank=True, null=True)
+    
+    def __str__(self):
+        return f"{self.user.username} - {self.user_type}"
 
 # Category Model
 class Category(models.Model):
@@ -33,7 +49,6 @@ class SubCategory(models.Model):
             self.slug = slugify(f"{self.category.name}-{self.name}")
         super().save(*args, **kwargs)
 
-
 # Product Model
 class Product(models.Model):
     name = models.CharField(max_length=200)
@@ -44,6 +59,8 @@ class Product(models.Model):
     created_by = models.ForeignKey(User, on_delete=models.CASCADE)
     stock = models.PositiveIntegerField(default=0)
     slug = models.SlugField(max_length=255, unique=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
 
     def __str__(self):
         return self.name
@@ -52,7 +69,10 @@ class Product(models.Model):
         if not self.slug:
             self.slug = slugify(self.name)
         super().save(*args, **kwargs)
-
+    
+    @property
+    def is_out_of_stock(self):
+        return self.stock == 0
 
 #Product Image Model
 class ProductImage(models.Model):
@@ -61,7 +81,6 @@ class ProductImage(models.Model):
 
     def __str__(self):
         return f"Image for {self.product.name}"
-    
 
 #CART model
 class Cart(models.Model):
@@ -72,7 +91,6 @@ class Cart(models.Model):
 
     def total(self):
         return sum(item.subtotal() for item in self.items.all())
-
 
 # Cart Item Model
 class CartItem(models.Model):
@@ -85,5 +103,23 @@ class CartItem(models.Model):
 
     def subtotal(self):
         return self.product.price * self.quantity
-    
 
+# Wishlist Model
+class Wishlist(models.Model):
+    user = models.OneToOneField(settings.AUTH_USER_MODEL, on_delete=models.CASCADE)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"{self.user.username}'s Wishlist"
+
+# Wishlist Item Model
+class WishlistItem(models.Model):
+    wishlist = models.ForeignKey(Wishlist, related_name='items', on_delete=models.CASCADE)
+    product = models.ForeignKey(Product, on_delete=models.CASCADE)
+    added_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        unique_together = ('wishlist', 'product')
+
+    def __str__(self):
+        return f"{self.product.name} in {self.wishlist.user.username}'s wishlist"

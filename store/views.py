@@ -1,18 +1,22 @@
+
 from django.shortcuts import render, redirect, get_object_or_404
-from store.models import Product, ProductImage, Cart, CartItem, Category, SubCategory
+from store.models import Product, ProductImage, Cart, CartItem, Category, SubCategory, UserProfile, Wishlist, WishlistItem
 from store.forms import RegisterForm, LoginForm, ProductForm, ProductImageFormSet
 from django.contrib.auth import authenticate, login, logout
 from django.contrib import messages
 from django.core.paginator import Paginator
 from django.db.models import Q
+from django.contrib.auth.decorators import login_required
+from django.http import JsonResponse
+from django.contrib.auth.models import User
 
-# Existing views (home, register, login, logout remain the same)
 def home(request):
+    """Home page with product search and filtering"""
     query = request.GET.get('q')
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
 
-    products = Product.objects.all()
+    products = Product.objects.all().order_by('-created_at')
 
     if query:
         products = products.filter(name__icontains=query)
@@ -30,35 +34,78 @@ def home(request):
     })
 
 def register_view(request):
+    """Enhanced registration with user type selection"""
     if request.method == 'POST':
         form = RegisterForm(request.POST)
         if form.is_valid():
-            user = form.save(commit=False)
-            user.set_password(form.cleaned_data['password'])
-            user.save()
-            messages.success(request, 'Account created! Please login.')
+            user = form.save()
+            messages.success(request, f'Account created as {form.cleaned_data["user_type"]}! Please login.')
             return redirect('login')
     else:
         form = RegisterForm()
     return render(request, 'store/register.html', {'form': form})
 
 def login_view(request):
+    """Custom login with redirect based on user type"""
     if request.method == 'POST':
         form = LoginForm(request, data=request.POST)
         if form.is_valid():
             user = form.get_user()
             login(request, user)
-            return redirect('home')
+            
+            # Redirect based on user type
+            if hasattr(user, 'profile') and user.profile.user_type == 'supplier':
+                return redirect('supplier_dashboard')
+            else:
+                return redirect('home')
     else:
         form = LoginForm()
     return render(request, 'store/login.html', {'form': form})
 
 def logout_view(request):
     logout(request)
-    return redirect('login')
+    messages.success(request, 'You have been logged out.')
+    return redirect('home')
 
-# Product views with slug support
+# SUPPLIER VIEWS
+@login_required
+def supplier_dashboard(request):
+    """Dashboard for suppliers"""
+    if not (hasattr(request.user, 'profile') and request.user.profile.user_type == 'supplier'):
+        messages.error(request, 'Access denied. Suppliers only.')
+        return redirect('home')
+    
+    products = Product.objects.filter(created_by=request.user).order_by('-created_at')
+    total_products = products.count()
+    out_of_stock = products.filter(stock=0).count()
+    
+    return render(request, 'store/supplier_dashboard.html', {
+        'products': products[:5],  # Show latest 5 products
+        'total_products': total_products,
+        'out_of_stock': out_of_stock,
+    })
+
+@login_required
+def supplier_products(request):
+    """List all products for supplier"""
+    if not (hasattr(request.user, 'profile') and request.user.profile.user_type == 'supplier'):
+        messages.error(request, 'Access denied. Suppliers only.')
+        return redirect('home')
+    
+    products = Product.objects.filter(created_by=request.user).order_by('-created_at')
+    paginator = Paginator(products, 10)
+    page = request.GET.get('page')
+    products = paginator.get_page(page)
+    
+    return render(request, 'store/supplier_products.html', {'products': products})
+
+@login_required
 def add_product(request):
+    """Add product - suppliers only"""
+    if not (hasattr(request.user, 'profile') and request.user.profile.user_type == 'supplier'):
+        messages.error(request, 'Access denied. Suppliers only.')
+        return redirect('home')
+    
     if request.method == 'POST':
         form = ProductForm(request.POST)
         formset = ProductImageFormSet(request.POST, request.FILES, queryset=ProductImage.objects.none())
@@ -68,11 +115,11 @@ def add_product(request):
             product.save()
 
             for image_form in formset.cleaned_data:
-                if image_form and image_form.get('image'):
+                if image_form and image_form.get('image') and not image_form.get('DELETE'):
                     ProductImage.objects.create(product=product, image=image_form['image'])
 
             messages.success(request, "Product and images added successfully.")
-            return redirect('product_list')
+            return redirect('supplier_products')
     else:
         form = ProductForm()
         formset = ProductImageFormSet(queryset=ProductImage.objects.none())
@@ -84,20 +131,37 @@ def add_product(request):
     })
 
 def product_list(request):
-    products = Product.objects.all().order_by('-id')
-    paginator = Paginator(products, 5)
+    """Public product listing for all users"""
+    products = Product.objects.all().order_by('-created_at')
+    paginator = Paginator(products, 12)
     page = request.GET.get('page')
     products = paginator.get_page(page)
     return render(request, 'store/product_list.html', {'products': products})
 
-# New view for product detail using slug
 def product_detail(request, slug):
+    """Product detail view"""
     product = get_object_or_404(Product, slug=slug)
-    return render(request, 'store/product_detail.html', {'product': product})
+    
+    # Check if product is in user's wishlist
+    in_wishlist = False
+    if request.user.is_authenticated:
+        wishlist, _ = Wishlist.objects.get_or_create(user=request.user)
+        in_wishlist = WishlistItem.objects.filter(wishlist=wishlist, product=product).exists()
+    
+    return render(request, 'store/product_detail.html', {
+        'product': product,
+        'in_wishlist': in_wishlist
+    })
 
-# Updated edit view using slug
+@login_required
 def edit_product_by_slug(request, slug):
+    """Edit product - only by owner"""
     product = get_object_or_404(Product, slug=slug)
+    
+    if product.created_by != request.user:
+        messages.error(request, 'You can only edit your own products.')
+        return redirect('product_list')
+    
     if request.method == 'POST':
         form = ProductForm(request.POST, instance=product)
         formset = ProductImageFormSet(request.POST, request.FILES, queryset=ProductImage.objects.filter(product=product))
@@ -105,11 +169,18 @@ def edit_product_by_slug(request, slug):
             form.save()
 
             for image_form in formset:
-                if image_form.cleaned_data and image_form.cleaned_data.get('image'):
-                    ProductImage.objects.create(product=product, image=image_form.cleaned_data['image'])
+                if image_form.cleaned_data:
+                    if image_form.cleaned_data.get('DELETE'):
+                        if image_form.instance.pk:
+                            image_form.instance.delete()
+                    elif image_form.cleaned_data.get('image'):
+                        if image_form.instance.pk:
+                            image_form.save()
+                        else:
+                            ProductImage.objects.create(product=product, image=image_form.cleaned_data['image'])
 
-            messages.success(request, "Product and images updated.")
-            return redirect('product_list')
+            messages.success(request, "Product updated successfully.")
+            return redirect('supplier_products')
     else:
         form = ProductForm(instance=product)
         formset = ProductImageFormSet(queryset=ProductImage.objects.filter(product=product))
@@ -121,16 +192,22 @@ def edit_product_by_slug(request, slug):
         'product': product
     })
 
-# Updated delete view using slug
+@login_required
 def delete_product_by_slug(request, slug):
+    """Delete product - only by owner"""
     product = get_object_or_404(Product, slug=slug)
+    
+    if product.created_by != request.user:
+        messages.error(request, 'You can only delete your own products.')
+        return redirect('product_list')
+    
     if request.method == 'POST':
         product.delete()
-        messages.success(request, "Product deleted.")
-        return redirect('product_list')
+        messages.success(request, "Product deleted successfully.")
+        return redirect('supplier_products')
     return render(request, 'store/product_confirm_delete.html', {'product': product})
 
-# New views for category-based product listing
+# CATEGORY VIEWS
 def category_products(request, category_slug):
     category = get_object_or_404(Category, slug=category_slug)
     products = Product.objects.filter(category=category)
@@ -151,20 +228,42 @@ def subcategory_products(request, category_slug, subcategory_slug):
         'products': products,
     })
 
-# Cart views (remain the same)
+# CART VIEWS
+@login_required
 def add_to_cart(request, product_id):
+    """Add product to cart - customers only"""
+    if hasattr(request.user, 'profile') and request.user.profile.user_type == 'supplier':
+        messages.error(request, 'Suppliers cannot add products to cart.')
+        return redirect('product_list')
+    
     product = get_object_or_404(Product, id=product_id)
+    
+    if product.stock == 0:
+        messages.error(request, f"{product.name} is out of stock.")
+        return redirect('product_detail', slug=product.slug)
+    
     cart, _ = Cart.objects.get_or_create(user=request.user)
-
     cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+    
     if not created:
-        cart_item.quantity += 1
-        cart_item.save()
+        if cart_item.quantity < product.stock:
+            cart_item.quantity += 1
+            cart_item.save()
+            messages.success(request, f"{product.name} quantity updated in cart.")
+        else:
+            messages.error(request, f"Cannot add more {product.name}. Stock limit reached.")
+    else:
+        messages.success(request, f"{product.name} added to cart.")
 
-    messages.success(request, f"{product.name} added to cart.")
     return redirect('cart_view')
 
+@login_required
 def cart_view(request):
+    """View cart - customers only"""
+    if hasattr(request.user, 'profile') and request.user.profile.user_type == 'supplier':
+        messages.error(request, 'Suppliers cannot view cart.')
+        return redirect('supplier_dashboard')
+    
     cart, _ = Cart.objects.get_or_create(user=request.user)
     items = cart.items.select_related('product')
     total = cart.total()
@@ -174,23 +273,115 @@ def cart_view(request):
         'total': total,
     })
 
+@login_required
 def remove_from_cart(request, item_id):
     item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
+    product_name = item.product.name
     item.delete()
+    messages.success(request, f"{product_name} removed from cart.")
     return redirect('cart_view')
 
+@login_required
 def update_cart_item(request, item_id):
     item = get_object_or_404(CartItem, id=item_id, cart__user=request.user)
     if request.method == 'POST':
         quantity = int(request.POST.get('quantity', 1))
-        if quantity > 0:
+        if quantity > 0 and quantity <= item.product.stock:
             item.quantity = quantity
             item.save()
+            messages.success(request, "Cart updated.")
+        elif quantity > item.product.stock:
+            messages.error(request, f"Only {item.product.stock} items available.")
         else:
             item.delete()
+            messages.success(request, "Item removed from cart.")
     return redirect('cart_view')
 
-#prodict detail
-def product_detail(request, slug):
-    product = get_object_or_404(Product, slug=slug)
-    return render(request, 'store/product_detail.html', {'product': product})
+# WISHLIST VIEWS
+@login_required
+def add_to_wishlist(request, product_id):
+    """Add product to wishlist - customers only"""
+    if hasattr(request.user, 'profile') and request.user.profile.user_type == 'supplier':
+        messages.error(request, 'Suppliers cannot use wishlist.')
+        return redirect('product_list')
+    
+    product = get_object_or_404(Product, id=product_id)
+    wishlist, _ = Wishlist.objects.get_or_create(user=request.user)
+    
+    wishlist_item, created = WishlistItem.objects.get_or_create(wishlist=wishlist, product=product)
+    
+    if created:
+        messages.success(request, f"{product.name} added to wishlist.")
+    else:
+        messages.info(request, f"{product.name} is already in your wishlist.")
+    
+    return redirect('product_detail', slug=product.slug)
+
+@login_required
+def remove_from_wishlist(request, product_id):
+    """Remove product from wishlist"""
+    product = get_object_or_404(Product, id=product_id)
+    wishlist = get_object_or_404(Wishlist, user=request.user)
+    
+    try:
+        wishlist_item = WishlistItem.objects.get(wishlist=wishlist, product=product)
+        wishlist_item.delete()
+        messages.success(request, f"{product.name} removed from wishlist.")
+    except WishlistItem.DoesNotExist:
+        messages.error(request, "Product not found in wishlist.")
+    
+    return redirect('wishlist_view')
+
+@login_required
+def wishlist_view(request):
+    """View wishlist - customers only"""
+    if hasattr(request.user, 'profile') and request.user.profile.user_type == 'supplier':
+        messages.error(request, 'Suppliers cannot view wishlist.')
+        return redirect('supplier_dashboard')
+    
+    wishlist, _ = Wishlist.objects.get_or_create(user=request.user)
+    items = wishlist.items.select_related('product')
+    
+    return render(request, 'store/wishlist.html', {
+        'items': items,
+    })
+
+@login_required
+def move_to_cart(request, product_id):
+    """Move product from wishlist to cart"""
+    if hasattr(request.user, 'profile') and request.user.profile.user_type == 'supplier':
+        messages.error(request, 'Suppliers cannot use cart.')
+        return redirect('supplier_dashboard')
+    
+    product = get_object_or_404(Product, id=product_id)
+    
+    if product.stock == 0:
+        messages.error(request, f"{product.name} is out of stock and cannot be added to cart.")
+        return redirect('wishlist_view')
+    
+    # Remove from wishlist
+    wishlist = get_object_or_404(Wishlist, user=request.user)
+    try:
+        wishlist_item = WishlistItem.objects.get(wishlist=wishlist, product=product)
+        wishlist_item.delete()
+    except WishlistItem.DoesNotExist:
+        pass
+    
+    # Add to cart
+    cart, _ = Cart.objects.get_or_create(user=request.user)
+    cart_item, created = CartItem.objects.get_or_create(cart=cart, product=product)
+    
+    if not created:
+        if cart_item.quantity < product.stock:
+            cart_item.quantity += 1
+            cart_item.save()
+    
+    messages.success(request, f"{product.name} moved to cart.")
+    return redirect('wishlist_view')
+
+# AJAX VIEW for dynamic subcategory loading
+def load_subcategories(request):
+    """Load subcategories based on selected category"""
+    category_id = request.GET.get('category_id')
+    subcategories = SubCategory.objects.filter(category_id=category_id).order_by('name')
+    return JsonResponse(list(subcategories.values('id', 'name')), safe=False)

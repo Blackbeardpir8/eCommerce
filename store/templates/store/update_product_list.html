@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% block title %}Product Management{% endblock %}
+{% block content %}
+<h2>My Products</h2>
+<a href="{% url 'add_product' %}">+ Add New Product</a>
+<table>
+    <thead>
+        <tr>
+            <th>Name</th>
+            <th>Price</th>
+            <th>Stock</th>
+            <th>Actions</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for product in products %}
+        <tr>
+            <td>{{ product.name }}</td>
+            <td>₹{{ product.price }}</td>
+            <td>{{ product.stock }}</td>
+            <td>
+                <a href="{% url 'edit_product' product.slug %}">Edit</a> |
+                <a href="{% url 'delete_product' product.slug %}">Delete</a>
+            </td>
+        </tr>
+    {% endfor %}
+    </tbody>
+</table>
+{% endblock %}
