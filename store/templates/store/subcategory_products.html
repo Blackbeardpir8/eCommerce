@@ -1,0 +1,322 @@
+{% extends 'base.html' %}
+{% block title %}{{ subcategory.name }} - {{ category.name }}{% endblock %}
+
+{% block content %}
+<!-- Breadcrumb -->
+<nav style="margin-bottom: 2rem;">
+  <ol style="list-style: none; padding: 0; display: flex; gap: 0.5rem; align-items: center; font-size: 0.9rem; color: #666;">
+    <li><a href="{% url 'home' %}" style="color: #007bff; text-decoration: none;">Home</a></li>
+    <li>→</li>
+    <li><a href="{% url 'category_products' category.slug %}" style="color: #007bff; text-decoration: none;">{{ category.name }}</a></li>
+    <li>→</li>
+    <li style="color: #333; font-weight: 600;">{{ subcategory.name }}</li>
+  </ol>
+</nav>
+
+<!-- Subcategory Header -->
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex align-items-center" style="gap: 1.5rem;">
+      <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+                  width: 80px; height: 80px; border-radius: 15px; 
+                  display: flex; align-items: center; justify-content: center; 
+                  color: white; font-size: 2rem; font-weight: bold; 
+                  box-shadow: 0 4px 15px rgba(0,0,0,0.1); flex-shrink: 0;">
+        📁
+      </div>
+      <div style="flex: 1;">
+        <h1 style="color: #333; margin-bottom: 0.5rem; font-size: 2rem;">{{ subcategory.name }}</h1>
+        <p style="color: #666; margin-bottom: 0.5rem; font-size: 1.1rem;">
+          In <a href="{% url 'category_products' category.slug %}" style="color: #007bff; text-decoration: none;">{{ category.name }}</a>
+        </p>
+        <div style="color: #007bff; font-weight: 600;">
+          {{ products|length }} product{{ products|length|pluralize }} available
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Action Buttons -->
+<div class="card">
+  <div class="card-body">
+    <div class="d-flex" style="gap: 1rem; flex-wrap: wrap; justify-content: center;">
+      <a href="{% url 'category_products' category.slug %}" class="btn btn-secondary">
+        ← Back to {{ category.name }}
+      </a>
+      <a href="{% url 'home' %}" class="btn btn-primary">
+        🏠 Browse All Categories
+      </a>
+      {% if user.is_authenticated and user.profile.user_type == 'supplier' %}
+      <a href="{% url 'add_product' %}" class="btn btn-success">
+        ➕ Add Product
+      </a>
+      {% endif %}
+    </div>
+  </div>
+</div>
+
+<!-- Products Section -->
+<div class="d-flex justify-content-between align-items-center mb-3">
+  <h3>Products in {{ subcategory.name }}</h3>
+  <div class="text-muted">
+    {{ products|length }} product{{ products|length|pluralize }} found
+  </div>
+</div>
+
+{% if products %}
+<div class="product-grid">
+  {% for product in products %}
+  <div class="product-card">
+    <div style="position: relative">
+      {% if product.images.first %}
+      <img
+        src="{{ product.images.first.image.url }}"
+        alt="{{ product.name }}"
+        class="product-image"
+      />
+      {% else %}
+      <div
+        class="product-image"
+        style="
+          background: linear-gradient(45deg, #f0f0f0, #e0e0e0);
+          display: flex;
+          align-items: center;
+          justify-content: center;
+          color: #666;
+        "
+      >
+        📷 No Image
+      </div>
+      {% endif %}
+      {% if product.is_out_of_stock %}
+      <div
+        style="
+          position: absolute;
+          top: 10px;
+          right: 10px;
+          background: #dc3545;
+          color: white;
+          padding: 0.25rem 0.5rem;
+          border-radius: 3px;
+          font-size: 0.8rem;
+        "
+      >
+        Out of Stock
+      </div>
+      {% endif %}
+    </div>
+
+    <div class="product-info">
+      <h4 class="product-title">
+        <a
+          href="{% url 'product_detail' product.slug %}"
+          style="color: inherit; text-decoration: none"
+        >
+          {{ product.name }}
+        </a>
+      </h4>
+
+      <div class="product-price">₹{{ product.price }}</div>
+
+      <div style="font-size: 0.9rem; color: #666; margin-bottom: 1rem">
+        <div><strong>Stock:</strong> {{ product.stock }} available</div>
+        <div><strong>Added by:</strong> {{ product.created_by.first_name|default:product.created_by.username }}</div>
+      </div>
+
+      <div style="margin-bottom: 1rem; font-size: 0.9rem; color: #666">
+        {{ product.description|truncatewords:15 }}
+      </div>
+
+      <div class="d-flex" style="gap: 0.5rem; flex-wrap: wrap">
+        {% if user.is_authenticated %}
+          {% if user.profile.user_type == 'customer' %}
+            {% if not product.is_out_of_stock %}
+            <a href="{% url 'add_to_cart' product.id %}" class="btn btn-success">
+              Add to Cart
+            </a>
+            <a href="{% url 'add_to_wishlist' product.id %}" class="btn btn-secondary">
+              Wishlist
+            </a>
+            {% else %}
+            <button class="btn btn-secondary" disabled>Out of Stock</button>
+            {% endif %}
+          {% endif %}
+        {% else %}
+        <a href="{% url 'login' %}" class="btn btn-primary">Login to Buy</a>
+        {% endif %}
+
+        <a href="{% url 'product_detail' product.slug %}" class="btn btn-secondary">
+          View Details
+        </a>
+      </div>
+    </div>
+  </div>
+  {% endfor %}
+</div>
+{% else %}
+<div class="card">
+  <div class="card-body text-center">
+    <div style="font-size: 4rem; margin-bottom: 1rem">📦</div>
+    <h4>No Products Found</h4>
+    <p class="text-muted">
+      There are no products in this subcategory yet. 
+      <a href="{% url 'category_products' category.slug %}">Browse other subcategories</a> or check back later!
+    </p>
+    <div style="margin-top: 2rem;">
+      <a href="{% url 'category_products' category.slug %}" class="btn btn-primary">
+        Browse {{ category.name }}
+      </a>
+      <a href="{% url 'home' %}" class="btn btn-secondary">
+        All Categories
+      </a>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Related Subcategories -->
+{% if category.subcategories.count > 1 %}
+<div class="card mt-4">
+  <div class="card-header">
+    <h4>Other Subcategories in {{ category.name }}</h4>
+  </div>
+  <div class="card-body">
+    <div class="related-subcategories">
+      {% for related_subcategory in category.subcategories.all %}
+        {% if related_subcategory.id != subcategory.id %}
+        <a href="{% url 'subcategory_products' category.slug related_subcategory.slug %}" 
+           class="related-subcategory-link">
+          <div class="related-subcategory-card">
+            <div class="related-subcategory-icon">📁</div>
+            <div class="related-subcategory-name">{{ related_subcategory.name }}</div>
+            <div class="related-subcategory-count">{{ related_subcategory.products.count }} products</div>
+          </div>
+        </a>
+        {% endif %}
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<style>
+  /* Product Grid Styles */
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+
+  .product-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+  }
+
+  .product-card:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .product-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+
+  .product-info {
+    padding: 1.5rem;
+  }
+
+  .product-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+
+  .product-title a:hover {
+    color: #007bff !important;
+  }
+
+  .product-price {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 1rem;
+  }
+
+  /* Related Subcategories Styles */
+  .related-subcategories {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    justify-content: center;
+  }
+
+  .related-subcategory-link {
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .related-subcategory-card {
+    background: #f8f9fa;
+    border: 2px solid #e9ecef;
+    border-radius: 10px;
+    padding: 1rem;
+    text-align: center;
+    min-width: 120px;
+    transition: all 0.3s ease;
+  }
+
+  .related-subcategory-card:hover {
+    border-color: #007bff;
+    background: white;
+    transform: translateY(-2px);
+    box-shadow: 0 3px 15px rgba(0,123,255,0.1);
+  }
+
+  .related-subcategory-icon {
+    font-size: 1.5rem;
+    margin-bottom: 0.5rem;
+    color: #007bff;
+  }
+
+  .related-subcategory-name {
+    font-size: 0.9rem;
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+    color: #333;
+  }
+
+  .related-subcategory-count {
+    font-size: 0.8rem;
+    color: #666;
+  }
+
+  /* Responsive Design */
+  @media (max-width: 768px) {
+    .product-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .d-flex {
+      flex-direction: column;
+      gap: 1rem !important;
+    }
+
+    .related-subcategories {
+      flex-direction: column;
+      align-items: center;
+    }
+
+    .related-subcategory-card {
+      min-width: 200px;
+    }
+  }
+</style>
+{% endblock %}

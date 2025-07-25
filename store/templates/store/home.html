@@ -1,19 +1,15 @@
-{% extends 'base.html' %} {% block title %}Home - eCommerce Store{% endblock %}
+{% extends 'base.html' %}
+{% block title %}Home - eCommerce Store{% endblock %}
+
 {% block content %}
+<!-- Search & Filter Section -->
 <div class="card">
   <div class="card-header">
     <h2>🔍 Search & Filter Products</h2>
   </div>
   <div class="card-body">
-    <form
-      method="get"
-      class="d-flex"
-      style="gap: 1rem; flex-wrap: wrap; align-items: end"
-    >
-      <div
-        class="form-group"
-        style="flex: 2; min-width: 250px; margin-bottom: 0"
-      >
+    <form method="get" class="d-flex" style="gap: 1rem; flex-wrap: wrap; align-items: end">
+      <div class="form-group" style="flex: 2; min-width: 250px; margin-bottom: 0">
         <label for="search">Search Products</label>
         <input
           type="text"
@@ -25,10 +21,19 @@
         />
       </div>
 
-      <div
-        class="form-group"
-        style="flex: 1; min-width: 120px; margin-bottom: 0"
-      >
+      <div class="form-group" style="flex: 1; min-width: 150px; margin-bottom: 0">
+        <label for="category">Category</label>
+        <select id="category" name="category" class="form-control">
+          <option value="">All Categories</option>
+          {% for category in categories %}
+            <option value="{{ category.id }}" {% if category.id|stringformat:"s" == selected_category|stringformat:"s" %}selected{% endif %}>
+              {{ category.name }}
+            </option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div class="form-group" style="flex: 1; min-width: 120px; margin-bottom: 0">
         <label for="min_price">Min Price (₹)</label>
         <input
           type="number"
@@ -42,10 +47,7 @@
         />
       </div>
 
-      <div
-        class="form-group"
-        style="flex: 1; min-width: 120px; margin-bottom: 0"
-      >
+      <div class="form-group" style="flex: 1; min-width: 120px; margin-bottom: 0">
         <label for="max_price">Max Price (₹)</label>
         <input
           type="number"
@@ -61,17 +63,58 @@
 
       <div class="form-group" style="margin-bottom: 0">
         <button type="submit" class="btn btn-primary">Search</button>
-        <a href="{% url 'home' %}" class="btn btn-secondary"> Reset </a>
+        <a href="{% url 'home' %}" class="btn btn-secondary">Reset</a>
       </div>
     </form>
+  </div>
+</div>
+
+<!-- Browse by Categories Section -->
+<div class="card">
+  <div class="card-header">
+    <h2>🏷️ Browse by Categories</h2>
+  </div>
+  <div class="card-body">
+    <div class="category-grid">
+      {% for category in categories %}
+        <div class="category-card">
+          <a href="{% url 'category_products' category.slug %}" class="category-link">
+            <div class="category-image-container">
+              {% if category.image %}
+                <img src="{{ category.image.url }}" alt="{{ category.name }}" class="category-image">
+              {% else %}
+                <div class="category-placeholder">
+                  📂 {{ category.name|slice:":1"|upper }}
+                </div>
+              {% endif %}
+            </div>
+            <div class="category-info">
+              <h4 class="category-name">{{ category.name }}</h4>
+              <p class="category-count">{{ category.products.count }} products</p>
+            </div>
+          </a>
+        </div>
+      {% endfor %}
+    </div>
   </div>
 </div>
 
 <!-- Results Summary -->
 <div class="d-flex justify-content-between align-items-center mb-3">
   <h3>
-    {% if query or min_price or max_price %} Search Results {% if query %}for
-    "{{ query }}"{% endif %} {% else %} Latest Products {% endif %}
+    {% if query or min_price or max_price or selected_category %}
+      Search Results
+      {% if query %}for "{{ query }}"{% endif %}
+      {% if selected_category %}
+        {% for category in categories %}
+          {% if category.id|stringformat:"s" == selected_category|stringformat:"s" %}
+            in {{ category.name }}
+          {% endif %}
+        {% endfor %}
+      {% endif %}
+    {% else %}
+      Latest Products
+    {% endif %}
   </h3>
   <div class="text-muted">
     {{ products|length }} product{{ products|length|pluralize }} found
@@ -103,7 +146,8 @@
       >
         📷 No Image
       </div>
-      {% endif %} {% if product.is_out_of_stock %}
+      {% endif %}
+      {% if product.is_out_of_stock %}
       <div
         style="
           position: absolute;
@@ -144,27 +188,24 @@
       </div>
 
       <div class="d-flex" style="gap: 0.5rem; flex-wrap: wrap">
-        {% if user.is_authenticated %} {% if user.profile.user_type ==
-        'customer' %} {% if not product.is_out_of_stock %}
-        <a href="{% url 'add_to_cart' product.id %}" class="btn btn-success">
-          Add to Cart
-        </a>
-        <a
-          href="{% url 'add_to_wishlist' product.id %}"
-          class="btn btn-secondary"
-        >
-          Wishlist
-        </a>
+        {% if user.is_authenticated %}
+          {% if user.profile.user_type == 'customer' %}
+            {% if not product.is_out_of_stock %}
+            <a href="{% url 'add_to_cart' product.id %}" class="btn btn-success">
+              Add to Cart
+            </a>
+            <a href="{% url 'add_to_wishlist' product.id %}" class="btn btn-secondary">
+              Wishlist
+            </a>
+            {% else %}
+            <button class="btn btn-secondary" disabled>Out of Stock</button>
+            {% endif %}
+          {% endif %}
         {% else %}
-        <button class="btn btn-secondary" disabled>Out of Stock</button>
-        {% endif %} {% endif %} 
-        <a href="{% url 'login' %}" class="btn btn-primary"> Login to Buy </a>
-        
+        <a href="{% url 'login' %}" class="btn btn-primary">Login to Buy</a>
+        {% endif %}
 
-        <a
-          href="{% url 'product_detail' product.slug %}"
-          class="btn btn-secondary"
-        >
+        <a href="{% url 'product_detail' product.slug %}" class="btn btn-secondary">
           View Details
         </a>
       </div>
@@ -178,12 +219,14 @@
     <div style="font-size: 4rem; margin-bottom: 1rem">🔍</div>
     <h4>No Products Found</h4>
     <p class="text-muted">
-      {% if query or min_price or max_price %} Try adjusting your search
-      criteria or <a href="{% url 'home' %}">browse all products</a>. {% else %}
-      No products are available at the moment. Check back later! {% endif %}
+      {% if query or min_price or max_price or selected_category %}
+        Try adjusting your search criteria or <a href="{% url 'home' %}">browse all products</a>.
+      {% else %}
+        No products are available at the moment. Check back later!
+      {% endif %}
     </p>
-    {% if query or min_price or max_price %}
-    <a href="{% url 'home' %}" class="btn btn-primary"> View All Products </a>
+    {% if query or min_price or max_price or selected_category %}
+    <a href="{% url 'home' %}" class="btn btn-primary">View All Products</a>
     {% endif %}
   </div>
 </div>
@@ -208,7 +251,7 @@
         Dashboard
       </a>
       {% else %}
-      <a href="{% url 'cart_view' %}" class="btn btn-success"> View Cart </a>
+      <a href="{% url 'cart_view' %}" class="btn btn-success">View Cart</a>
       <a href="{% url 'wishlist_view' %}" class="btn btn-primary">
         My Wishlist
       </a>
@@ -222,15 +265,130 @@
 {% endif %}
 
 <style>
+  /* Category Grid Styles */
+  .category-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 1.5rem;
+    margin-top: 1rem;
+  }
+
+  .category-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    transition: all 0.3s ease;
+  }
+
+  .category-card:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 5px 20px rgba(0,0,0,0.15);
+  }
+
+  .category-link {
+    text-decoration: none;
+    color: inherit;
+    display: block;
+  }
+
+  .category-image-container {
+    position: relative;
+    height: 120px;
+    overflow: hidden;
+  }
+
+  .category-image {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+  }
+
+  .category-card:hover .category-image {
+    transform: scale(1.05);
+  }
+
+  .category-placeholder {
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    color: white;
+    font-weight: bold;
+  }
+
+  .category-info {
+    padding: 1rem;
+    text-align: center;
+  }
+
+  .category-name {
+    font-size: 1.1rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
+  }
+
+  .category-count {
+    font-size: 0.9rem;
+    color: #666;
+    margin: 0;
+  }
+
+  /* Product Grid Styles */
+  .product-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 2rem;
+    margin-top: 2rem;
+  }
+
+  .product-card {
+    background: white;
+    border-radius: 10px;
+    overflow: hidden;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.1);
+    transition: transform 0.3s;
+  }
+
   .product-card:hover {
     transform: translateY(-5px);
     box-shadow: 0 5px 25px rgba(0, 0, 0, 0.15);
+  }
+
+  .product-image {
+    width: 100%;
+    height: 200px;
+    object-fit: cover;
+  }
+
+  .product-info {
+    padding: 1.5rem;
+  }
+
+  .product-title {
+    font-size: 1.2rem;
+    font-weight: 600;
+    margin-bottom: 0.5rem;
+    color: #333;
   }
 
   .product-title a:hover {
     color: #007bff !important;
   }
 
+  .product-price {
+    font-size: 1.4rem;
+    font-weight: bold;
+    color: #007bff;
+    margin-bottom: 1rem;
+  }
+
+  /* Responsive Design */
   @media (max-width: 768px) {
     .d-flex form {
       flex-direction: column;
@@ -238,6 +396,19 @@
 
     .form-group {
       margin-bottom: 1rem !important;
+    }
+
+    .category-grid {
+      grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+      gap: 1rem;
+    }
+
+    .product-grid {
+      grid-template-columns: 1fr;
+    }
+
+    .category-image-container {
+      height: 100px;
     }
   }
 </style>

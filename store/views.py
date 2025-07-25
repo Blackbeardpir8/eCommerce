@@ -30,17 +30,27 @@ def is_customer_or_anonymous(user):
     return user_type == 'customer' or user_type is None or not user.is_authenticated
 
 def home(request):
-    """Home page with product search and filtering"""
+    """Home page with product search, filtering, and category browsing"""
     query = request.GET.get('q')
     min_price = request.GET.get('min_price')
     max_price = request.GET.get('max_price')
+    category_id = request.GET.get('category')
 
     products = Product.objects.all().order_by('-created_at')
 
+    # Text search
     if query:
         products = products.filter(name__icontains=query)
 
-    # Add proper validation for price filters
+    # Category filter
+    if category_id:
+        try:
+            category_id = int(category_id)
+            products = products.filter(category_id=category_id)
+        except (ValueError, TypeError):
+            category_id = None
+
+    # Price filters with proper validation
     try:
         if min_price:
             min_price_val = float(min_price)
@@ -55,11 +65,16 @@ def home(request):
     except (ValueError, TypeError):
         max_price = ''
 
+    # Get all categories for display
+    categories = Category.objects.all().order_by('name')
+
     return render(request, 'store/home.html', {
         'products': products,
+        'categories': categories,
         'query': query or '',
         'min_price': min_price or '',
         'max_price': max_price or '',
+        'selected_category': category_id,
     })
 
 def register_view(request):
@@ -98,6 +113,44 @@ def logout_view(request):
     logout(request)
     messages.success(request, 'You have been logged out.')
     return redirect('home')
+
+
+# CATEGORY VIEWS - Updated versions
+def category_products(request, category_slug):
+    """Display products in a category with subcategory navigation"""
+    category = get_object_or_404(Category, slug=category_slug)
+    try:
+        products = Product.objects.filter(category=category).select_related('subcategory', 'created_by').prefetch_related('images').order_by('-created_at')
+        subcategories = category.subcategories.all().order_by('name')
+        
+        return render(request, 'store/category_products.html', {
+            'category': category,
+            'products': products,
+            'subcategories': subcategories,
+        })
+    except Exception as e:
+        messages.error(request, 'Error loading category products.')
+        return redirect('home')
+
+def subcategory_products(request, category_slug, subcategory_slug):
+    """Display products in a specific subcategory"""
+    category = get_object_or_404(Category, slug=category_slug)
+    subcategory = get_object_or_404(SubCategory, slug=subcategory_slug, category=category)
+    
+    try:
+        products = Product.objects.filter(subcategory=subcategory).select_related('created_by').prefetch_related('images').order_by('-created_at')
+        
+        return render(request, 'store/subcategory_products.html', {
+            'category': category,
+            'subcategory': subcategory,
+            'products': products,
+        })
+    except Exception as e:
+        messages.error(request, 'Error loading subcategory products.')
+        return redirect('category_products', category_slug=category_slug)
+
+
+
 
 # SUPPLIER VIEWS
 
